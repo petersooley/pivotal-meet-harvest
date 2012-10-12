@@ -10,13 +10,16 @@
     hPass = localStorage['harvest_password'];
     hSubdomain = localStorage['harvest_subdomain'];
     if ((pUser != null) && (pPass != null) && (hUser != null) && (hPass != null) && (hSubdomain != null)) {
-      console.log('checking response');
       chrome.extension.sendMessage({
         method: 'login'
       }, function(response) {
-        console.log(response);
+        var msg, _i, _len, _ref;
         if (response.error != null) {
-          return console.log('error');
+          _ref = response.error.messages;
+          for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+            msg = _ref[_i];
+            $('.error').append('<div>' + msg + '</div>');
+          }
         }
       });
     }

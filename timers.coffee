@@ -15,9 +15,6 @@ class Timers
 	setup: ->
 		console.log 'setting up all'
 
-window.ERROR = (msg) ->
-	alert(msg)
-	throw new Error(msg)
 
 $ ->
 	# Get user accounts data from localStorage from background.js
@@ -25,7 +22,9 @@ $ ->
 		console.log 'got response'
 
 		if response.error?
-			ERROR('Pivotal Meet Harvest Error: There was a problem logging in to the Pivotal Tracker API or the Harvest API. See extension options.')
+			msg = 'Pivotal Meet Harvest Error: There was a problem logging in to the Pivotal Tracker API or the Harvest API. See extension options.'
+			alert(msg)
+			throw new Error(msg)
 
 		# Parse the URL to figure out the project ID and story ID
 		uri = document.location.href.split('/')

@@ -8,3 +8,5 @@
     font-size: 1em; }
   #form .field {
     padding: 5px; }
+  #form .error {
+    color: red; }

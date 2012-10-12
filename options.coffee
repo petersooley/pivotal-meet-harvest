@@ -7,11 +7,12 @@ $ ->
 	hSubdomain = localStorage['harvest_subdomain']
 
 	if pUser? and pPass? and hUser? and hPass? and hSubdomain?
-		console.log 'checking response'
 		chrome.extension.sendMessage(method: 'login', (response) ->
-			console.log response
 			if response.error?
-				console.log 'error'
+				for msg in response.error.messages
+					$('.error').append('<div>'+msg+'</div>')
+				return
+
 		)
 
 	$('#pivotal_username').val(pUser)
