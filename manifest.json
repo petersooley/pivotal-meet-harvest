@@ -1,0 +1,21 @@
+{
+	"name": "Pivotal Meet Harvest",
+	"version": "1",
+	"manifest_version": 2,
+	"description": "This extension adds harvest timers to pivotal stories.",
+	"content_scripts": [
+		{
+			"matches": ["https://www.pivotaltracker.com/*"],
+			"css": ["pivotal.css"],
+			"js": ["jquery.js", "timers.js"]
+		}
+	],
+	"options_page": "options.html",
+	"permissions": [
+		"https://www.pivotaltracker.com/",
+		"https://*.harvestapp.com/"
+	],
+	"background": {
+		"scripts": ["jquery.js","base64.js","background.js"]
+	}
+}

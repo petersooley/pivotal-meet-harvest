@@ -1,0 +1,10 @@
+#form {
+  font-family: helvetica; }
+  #form label {
+    width: 100px;
+    display: inline-block; }
+  #form input {
+    padding: 3px;
+    font-size: 1em; }
+  #form .field {
+    padding: 5px; }
