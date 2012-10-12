@@ -27,29 +27,26 @@
       this.user = user;
       this.pass = pass;
       this.subdomain = subdomain;
-      this.POST('daily');
+      console.log(this.POST('daily'));
     }
 
     Harvest.prototype.POST = function(path) {
-      console.log('posting to ' + 'https://' + this.subdomain + '.harvestapp.com/' + path);
-      console.log('Basic ' + Base64.encode(this.user + ':' + this.pass));
-      return $.ajax({
+      var returnData;
+      returnData = {};
+      $.ajax({
         url: 'https://' + this.subdomain + '.harvestapp.com/' + path,
         type: 'GET',
+        async: false,
         headers: {
           'Content-Type': 'application/json',
           'Accept': 'application/json',
           'Authorization': 'Basic ' + Base64.encode(this.user + ':' + this.pass)
         },
         success: function(data) {
-          return console.log(data);
-        },
-        error: function(xhr, text, errorThrown) {
-          console.log('error');
-          console.log(text);
-          return console.log(errorThrown);
+          return returnData = data;
         }
       });
+      return returnData;
     };
 
     return Harvest;

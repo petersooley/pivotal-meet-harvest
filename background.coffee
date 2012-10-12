@@ -13,25 +13,22 @@ class Pivotal
 
 class Harvest
 	constructor: (@user, @pass, @subdomain) ->
-		@POST('daily')
+		console.log @POST('daily')
 
 	POST: (path) ->
-		console.log 'posting to '+'https://'+@subdomain+'.harvestapp.com/'+path
-		console.log 'Basic '+Base64.encode(@user+':'+@pass)
+		returnData = {}
 		$.ajax(
 			url: 'https://'+@subdomain+'.harvestapp.com/'+path
 			type: 'GET'
+			async: false
 			headers:
 				'Content-Type': 'application/json'
 				'Accept': 'application/json'
 				'Authorization': 'Basic '+Base64.encode(@user+':'+@pass)
 			success: (data) ->
-				console.log data
-			error: (xhr, text, errorThrown) ->
-				console.log 'error'
-				console.log text
-				console.log errorThrown
+				returnData = data
 		)
+		return returnData
 
 chrome.extension.onMessage.addListener((request, sender, sendResponse) ->
 	switch request.method

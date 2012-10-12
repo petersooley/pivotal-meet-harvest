@@ -2,11 +2,29 @@
 (function() {
 
   $(function() {
-    $('#pivotal_username').val(localStorage['pivotal_username']);
-    $('#pivotal_password').val(localStorage['pivotal_password']);
-    $('#harvest_username').val(localStorage['harvest_username']);
-    $('#harvest_password').val(localStorage['harvest_password']);
-    $('#harvest_subdomain').val(localStorage['harvest_subdomain']);
+    var hPass, hSubdomain, hUser, pPass, pUser;
+    console.log('starting');
+    pUser = localStorage['pivotal_username'];
+    pPass = localStorage['pivotal_password'];
+    hUser = localStorage['harvest_username'];
+    hPass = localStorage['harvest_password'];
+    hSubdomain = localStorage['harvest_subdomain'];
+    if ((pUser != null) && (pPass != null) && (hUser != null) && (hPass != null) && (hSubdomain != null)) {
+      console.log('checking response');
+      chrome.extension.sendMessage({
+        method: 'login'
+      }, function(response) {
+        console.log(response);
+        if (response.error != null) {
+          return console.log('error');
+        }
+      });
+    }
+    $('#pivotal_username').val(pUser);
+    $('#pivotal_password').val(pPass);
+    $('#harvest_username').val(hUser);
+    $('#harvest_password').val(hPass);
+    $('#harvest_subdomain').val(hSubdomain);
     return $('form').submit(function() {
       localStorage['pivotal_username'] = $('#pivotal_username').val();
       localStorage['pivotal_password'] = $('#pivotal_password').val();
