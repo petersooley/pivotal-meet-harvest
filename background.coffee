@@ -1,9 +1,10 @@
 class Pivotal
 	constructor: (user, pass) ->
+		@url = 'https://www.pivotaltracker.com/services/v3/'
 		# Get the user's token
 		self = @
 		$.ajax(
-			url: 'https://www.pivotaltracker.com/services/v3/tokens/active'
+			url: @url+'tokens/active'
 			type: 'POST'
 			async: false
 			data:
@@ -16,68 +17,129 @@ class Pivotal
 				throw Error('Pivotal Tracker login failure.')
 		)
 
+	getAllProjects: ->
+		data = @HTTP('GET','projects', null)
+		projects = []
+		for project in $(data).find('project')
+			name = $(project).find('name').first().text()
+			id = $(project).find('id').text()
+			projects.push
+				name: name
+				id: id
+		return projects
+
+	HTTP: (method, path, data) ->
+		returnData = false
+		$.ajax(
+			url: @url+path
+			type: method
+			async: false
+			data: data
+			headers:
+				'X-TrackerToken': @token
+			success: (data) ->
+				returnData = data
+			error: ->
+				returnData = false
+		)
+		return returnData
+
 class Harvest
 	constructor: (@user, @pass, @subdomain) ->
 		# Run a test to be sure that logging in works.
-		@POST('account/who_am_i')
+		result = @HTTP('account/who_am_i')
+		if result == false
+			throw Error('Harvest login failure.')
 
-	POST: (path) ->
+	getAllProjects: ->
+		data = @HTTP('projects')
+		console.log data
+		projects = []
+		for project in $(data).find('project')
+			name = $(project).find('name').text()
+			id = $(project).find('id').text()
+			code = $(project).find('code').text()
+			projects.push
+				name: name
+				id: id
+				code: code
+		return projects
+
+
+	HTTP: (path) ->
 		returnData = {}
 		$.ajax(
 			url: 'https://'+@subdomain+'.harvestapp.com/'+path
 			type: 'GET'
 			async: false
 			headers:
-				'Content-Type': 'application/json'
-				'Accept': 'application/json'
+				'Content-Type': 'application/xml'
+				'Accept': 'application/xml'
 				'Authorization': 'Basic '+Base64.encode(@user+':'+@pass)
 			success: (data, status) ->
 				returnData = data
 			error: (xhr, status, error) ->
-				throw Error('Harvest login failure.')
+				returnData = false
 		)
 		return returnData
 
-# START HERE
+class App
+	constructor: ->
+		@pivotal = {}
+		@harvest = {}
 
-pivotal = {}
-harvest = {}
+		chrome.extension.onMessage.addListener((request, sender, sendResponse) =>
+			error = {}
+			error.messages = []
+			switch request.method
+				when 'login'
+					return true if @login(sendResponse, error)
+				when 'getProjects'
+					return true if @getProjects(sendResponse, error)
+				else
+					error.messages = [
+						"Unrecognized request method in sendMessage call."
+					]
+			sendResponse(error: error)
+			return true
+		)
 
-chrome.extension.onMessage.addListener((request, sender, sendResponse) ->
-	error = {}
-	error.messages = []
-	switch request.method
-		when 'login'
-			pUser = localStorage['pivotal_username']
-			pPass = localStorage['pivotal_password']
-			hUser = localStorage['harvest_username']
-			hPass = localStorage['harvest_password']
-			hSubdomain = localStorage['harvest_subdomain']
-			pivotalError = null
-			harvestError = null
-			if pUser? and pPass? and hUser? and hPass?
-				console.log 'logging in'
-				try
-					pivotal = new Pivotal(pUser, pPass)
-				catch e
-					console.log e
-					error.messages.push e.message
-				try
-					harvest = new Harvest(hUser, hPass, hSubdomain)
-				catch e
-					error.messages.push e.message
+	login: (sendResponse, error) ->
+		pUser = localStorage['pivotal_username']
+		pPass = localStorage['pivotal_password']
+		hUser = localStorage['harvest_username']
+		hPass = localStorage['harvest_password']
+		hSubdomain = localStorage['harvest_subdomain']
+		pivotalError = null
+		harvestError = null
+		if pUser? and pPass? and hUser? and hPass?
+			console.log 'logging in'
+			try
+				@pivotal = new Pivotal(pUser, pPass)
+			catch e
+				error.messages.push e.message
+			try
+				@harvest = new Harvest(hUser, hPass, hSubdomain)
+			catch e
+				error.messages.push e.message
 
-				if error.messages.length == 0
-					sendResponse(success: true)
-					return
-			else
-				error.messages = [
-					"Missing login information. See options page."
-				]
+			if error.messages.length == 0
+				sendResponse(success: true)
+				return true
 		else
 			error.messages = [
-				"Missing request method in sendMessage call."
+				"Missing login information. See options page."
 			]
+		return false
 
-	sendResponse(error: error)
-)
+	getProjects: (sendResponse, error) ->
+		console.log 'getting projects'
+		pivotalProjects = @pivotal.getAllProjects()
+		harvestProjects = @harvest.getAllProjects()
+		sendResponse(
+			pivotal: pivotalProjects
+			harvest: harvestProjects
+		)
+		return true
+
+app = new App()

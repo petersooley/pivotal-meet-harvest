@@ -12,7 +12,18 @@ $ ->
 				for msg in response.error.messages
 					$('.error').append('<div>'+msg+'</div>')
 				return
+			chrome.extension.sendMessage(method: 'getProjects', (response) ->
+				$body = $('#projects').find('tbody')
+				harvest = response.harvest
+				pivotal = response.pivotal
 
+				options = '<option value=""></option>'
+				for project in pivotal
+					options += '<option value="'+project.id+'">'+project.name+'</option>'
+
+				for project in harvest
+					$body.append('<tr><td><span class="code">['+project.code+']</span> '+project.name+'</td><td><select id="'+project.id+'">'+options+'</select></td></tr>')
+			)
 		)
 
 	$('#pivotal_username').val(pUser)

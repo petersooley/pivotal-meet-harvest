@@ -20,7 +20,27 @@
             msg = _ref[_i];
             $('.error').append('<div>' + msg + '</div>');
           }
+          return;
         }
+        return chrome.extension.sendMessage({
+          method: 'getProjects'
+        }, function(response) {
+          var $body, harvest, options, pivotal, project, _j, _k, _len1, _len2, _results;
+          $body = $('#projects').find('tbody');
+          harvest = response.harvest;
+          pivotal = response.pivotal;
+          options = '<option value=""></option>';
+          for (_j = 0, _len1 = pivotal.length; _j < _len1; _j++) {
+            project = pivotal[_j];
+            options += '<option value="' + project.id + '">' + project.name + '</option>';
+          }
+          _results = [];
+          for (_k = 0, _len2 = harvest.length; _k < _len2; _k++) {
+            project = harvest[_k];
+            _results.push($body.append('<tr><td><span class="code">[' + project.code + ']</span> ' + project.name + '</td><td><select id="' + project.id + '">' + options + '</select></td></tr>'));
+          }
+          return _results;
+        });
       });
     }
     $('#pivotal_username').val(pUser);

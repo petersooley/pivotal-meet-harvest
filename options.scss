@@ -1,5 +1,20 @@
-#form {
+table {
+	td, th {
+		min-width: 250px;
+		padding-left: 20px;
+	}
+	th {
+		text-align: left;
+	}
+}
+
+body {
 	font-family: helvetica;
+}
+
+#form {
+	width: 250px;
+	position: relative;
 	label {
 		width: 100px;
 		display: inline-block;
@@ -13,5 +28,13 @@
 	}
 	.error {
 		color: red;
+	}
+}
+
+#projects {
+	padding-left: 30px;
+	margin-top: 0;
+	.code {
+		font-size: smaller;
 	}
 }

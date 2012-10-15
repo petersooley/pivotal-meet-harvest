@@ -6,36 +6,55 @@
 	<script src="options.js"></script>
 </head>
 <body>
-	<form id="form">
-		<div class="error"></div>
+	<table>
+		<tr>
+			<td valign="top">
+				<form id="form">
+					<div class="error"></div>
 
-		<h3>Pivotal Tracker Settings</h3>
-		<div class="field">
-			<label>Username:</label>
-			<input id="pivotal_username" type="text" size="30" />
-		</div>
-		<div class="field">
-			<label>Password:</label>
-			<input id="pivotal_password" type="password" size="30" />
-		</div>
+					<h3>Pivotal Tracker Settings</h3>
+					<div class="field">
+						<label>Username:</label>
+						<input id="pivotal_username" type="text" size="30" />
+					</div>
+					<div class="field">
+						<label>Password:</label>
+						<input id="pivotal_password" type="password" size="30" />
+					</div>
 
-		<h3>Harvest Settings</h3>
-		<div class="field">
-			<label>Username:</label>
-			<input id="harvest_username" type="text" size="30" />
-		</div>
-		<div class="field">
-			<label>Password:</label>
-			<input id="harvest_password" type="password" size="30" />
-		</div>
-		<div class="field">
-			<label>Subdomain:</label>
-			<input id="harvest_subdomain" type="text" size="30" />
-		</div>
+					<h3>Harvest Settings</h3>
+					<div class="field">
+						<label>Username:</label>
+						<input id="harvest_username" type="text" size="30" />
+					</div>
+					<div class="field">
+						<label>Password:</label>
+						<input id="harvest_password" type="password" size="30" />
+					</div>
+					<div class="field">
+						<label>Subdomain:</label>
+						<input id="harvest_subdomain" type="text" size="30" />
+					</div>
 
-		<div class="field">
-			<input type="submit" value="Save" />
-		</div>
-	</form>
+					<div class="field">
+						<input type="submit" value="Save" />
+					</div>
+				</form>
+			</td>
+			<td valign="top" id="projects">
+				<table>
+					<thead>
+						<tr>
+							<th>Harvest Projects</th>
+							<th>Pivotal Tracker Projects</th>
+						</tr>
+					</thead>
+					<tbody>
+
+					</tbody>
+				</table>
+			</td>
+		</tr>
+	</table>
 </body>
 </html>
