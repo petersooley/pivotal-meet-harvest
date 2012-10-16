@@ -3,12 +3,16 @@
 
   $(function() {
     var hPass, hSubdomain, hUser, pPass, pUser;
-    console.log('starting');
     pUser = localStorage['pivotal_username'];
     pPass = localStorage['pivotal_password'];
     hUser = localStorage['harvest_username'];
     hPass = localStorage['harvest_password'];
     hSubdomain = localStorage['harvest_subdomain'];
+    $('#pivotal_username').val(pUser);
+    $('#pivotal_password').val(pPass);
+    $('#harvest_username').val(hUser);
+    $('#harvest_password').val(hPass);
+    $('#harvest_subdomain').val(hSubdomain);
     if ((pUser != null) && (pPass != null) && (hUser != null) && (hPass != null) && (hSubdomain != null)) {
       chrome.extension.sendMessage({
         method: 'login'
@@ -25,7 +29,7 @@
         return chrome.extension.sendMessage({
           method: 'getProjects'
         }, function(response) {
-          var $body, harvest, options, pivotal, project, _j, _k, _len1, _len2, _results;
+          var $body, harvest, map, mapping, options, pivotal, project, _j, _k, _l, _len1, _len2, _len3, _results;
           $body = $('#projects').find('tbody');
           harvest = response.harvest;
           pivotal = response.pivotal;
@@ -34,26 +38,42 @@
             project = pivotal[_j];
             options += '<option value="' + project.id + '">' + project.name + '</option>';
           }
-          _results = [];
           for (_k = 0, _len2 = harvest.length; _k < _len2; _k++) {
             project = harvest[_k];
-            _results.push($body.append('<tr><td><span class="code">[' + project.code + ']</span> ' + project.name + '</td><td><select id="' + project.id + '">' + options + '</select></td></tr>'));
+            $body.append('<tr><td><span class="code">[' + project.code + ']</span> ' + project.name + '</td><td><select id="' + project.id + '">' + options + '</select></td></tr>');
           }
-          return _results;
+          if (localStorage['project_mapping'] != null) {
+            mapping = JSON.parse(localStorage['project_mapping']);
+            _results = [];
+            for (_l = 0, _len3 = mapping.length; _l < _len3; _l++) {
+              map = mapping[_l];
+              _results.push($('#' + map.harvest).val(map.pivotal));
+            }
+            return _results;
+          }
         });
       });
     }
-    $('#pivotal_username').val(pUser);
-    $('#pivotal_password').val(pPass);
-    $('#harvest_username').val(hUser);
-    $('#harvest_password').val(hPass);
-    $('#harvest_subdomain').val(hSubdomain);
     return $('form').submit(function() {
+      var $el, el, mapping, _i, _len, _ref;
       localStorage['pivotal_username'] = $('#pivotal_username').val();
       localStorage['pivotal_password'] = $('#pivotal_password').val();
       localStorage['harvest_username'] = $('#harvest_username').val();
       localStorage['harvest_password'] = $('#harvest_password').val();
-      return localStorage['harvest_subdomain'] = $('#harvest_subdomain').val();
+      localStorage['harvest_subdomain'] = $('#harvest_subdomain').val();
+      mapping = [];
+      _ref = $('#projects select');
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        el = _ref[_i];
+        $el = $(el);
+        if ($el.val() !== '') {
+          mapping.push({
+            pivotal: $el.val(),
+            harvest: $el.attr('id')
+          });
+        }
+      }
+      return localStorage['project_mapping'] = JSON.stringify(mapping);
     });
   });
 
