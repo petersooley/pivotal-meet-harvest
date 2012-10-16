@@ -27,16 +27,18 @@
 
   })();
 
+  window.ERR = function(msg) {
+    alert(msg);
+    throw new Error(msg);
+  };
+
   $(function() {
-    return chrome.extension.sendMessage({
+    chrome.extension.sendMessage({
       method: 'login'
     }, function(response) {
-      var msg, projectId, storyId, uri;
-      console.log('got response');
+      var projectId, storyId, uri;
       if (response.error != null) {
-        msg = 'Pivotal Meet Harvest Error: There was a problem logging in to the Pivotal Tracker API or the Harvest API. See extension options.';
-        alert(msg);
-        throw new Error(msg);
+        ERR('Pivotal Meet Harvest Error: There was a problem logging in to the Pivotal Tracker API or the Harvest API. See extension options.');
       }
       uri = document.location.href.split('/');
       if (typeof uri[4] === 'undefined' || uri[3] !== 'projects') {
@@ -47,6 +49,11 @@
       if (typeof uri[5] !== 'undefined' && uri[5] === 'stories') {
         return storyId = parseInt(uri[6]);
       }
+    });
+    return chrome.extension.sendMessage({
+      method: 'getProjects'
+    }, function(response) {
+      return console.log(response);
     });
   });
 

@@ -93,12 +93,12 @@ class App
 			switch request.method
 				when 'login'
 					return true if @login(sendResponse, error)
+				when 'downloadProjects'
+					return true if @downloadProjects(sendResponse, error)
 				when 'getProjects'
 					return true if @getProjects(sendResponse, error)
 				else
-					error.messages = [
-						"Unrecognized request method in sendMessage call."
-					]
+					error.messages.push "Unrecognized request method in sendMessage call."
 			sendResponse(error: error)
 			return true
 		)
@@ -125,12 +125,10 @@ class App
 				sendResponse(success: true)
 				return true
 		else
-			error.messages = [
-				"Missing login information. See options page."
-			]
+			error.messages.push "Missing login information. See options page."
 		return false
 
-	getProjects: (sendResponse, error) ->
+	downloadProjects: (sendResponse, error) ->
 		pivotalProjects = @pivotal.getAllProjects()
 		harvestProjects = @harvest.getAllProjects()
 		sendResponse(
@@ -138,5 +136,36 @@ class App
 			harvest: harvestProjects
 		)
 		return true
+
+
+	# Download the projects and include the mapping as data
+	getProjects: (sendResponse, error) ->
+		if localStorage['project_mapping']?
+			mapping = JSON.parse(localStorage['project_mapping'])
+
+			pivotalProjects = @pivotal.getAllProjects()
+			harvestProjects = @harvest.getAllProjects()
+
+			projects = []
+			for map in mapping
+				pProj = @findProject(map.pivotal, pivotalProjects)
+				hProj = @findProject(map.harvest, harvestProjects)
+				projects.push
+					pivotalId: pProj.id
+					pivotalName: pProj.name
+					harvestId: hProj.id
+					harevestName: hProj.name
+					harevestCode: hProj.code
+
+			sendResponse(projects: projects)
+			return true
+		else
+			error.messages.push "No projects mapped yet. See options page."
+			return false
+
+	findProject: (id, projects) ->
+		for proj in projects
+			if proj.id == id
+				return proj
 
 app = new App()

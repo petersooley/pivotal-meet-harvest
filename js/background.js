@@ -143,13 +143,18 @@
               return true;
             }
             break;
+          case 'downloadProjects':
+            if (_this.downloadProjects(sendResponse, error)) {
+              return true;
+            }
+            break;
           case 'getProjects':
             if (_this.getProjects(sendResponse, error)) {
               return true;
             }
             break;
           default:
-            error.messages = ["Unrecognized request method in sendMessage call."];
+            error.messages.push("Unrecognized request method in sendMessage call.");
         }
         sendResponse({
           error: error
@@ -185,12 +190,12 @@
           return true;
         }
       } else {
-        error.messages = ["Missing login information. See options page."];
+        error.messages.push("Missing login information. See options page.");
       }
       return false;
     };
 
-    App.prototype.getProjects = function(sendResponse, error) {
+    App.prototype.downloadProjects = function(sendResponse, error) {
       var harvestProjects, pivotalProjects;
       pivotalProjects = this.pivotal.getAllProjects();
       harvestProjects = this.harvest.getAllProjects();
@@ -199,6 +204,45 @@
         harvest: harvestProjects
       });
       return true;
+    };
+
+    App.prototype.getProjects = function(sendResponse, error) {
+      var hProj, harvestProjects, map, mapping, pProj, pivotalProjects, projects, _i, _len;
+      if (localStorage['project_mapping'] != null) {
+        mapping = JSON.parse(localStorage['project_mapping']);
+        pivotalProjects = this.pivotal.getAllProjects();
+        harvestProjects = this.harvest.getAllProjects();
+        projects = [];
+        for (_i = 0, _len = mapping.length; _i < _len; _i++) {
+          map = mapping[_i];
+          pProj = this.findProject(map.pivotal, pivotalProjects);
+          hProj = this.findProject(map.harvest, harvestProjects);
+          projects.push({
+            pivotalId: pProj.id,
+            pivotalName: pProj.name,
+            harvestId: hProj.id,
+            harevestName: hProj.name,
+            harevestCode: hProj.code
+          });
+        }
+        sendResponse({
+          projects: projects
+        });
+        return true;
+      } else {
+        error.messages.push("No projects mapped yet. See options page.");
+        return false;
+      }
+    };
+
+    App.prototype.findProject = function(id, projects) {
+      var proj, _i, _len;
+      for (_i = 0, _len = projects.length; _i < _len; _i++) {
+        proj = projects[_i];
+        if (proj.id === id) {
+          return proj;
+        }
+      }
     };
 
     return App;

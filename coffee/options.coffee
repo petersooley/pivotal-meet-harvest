@@ -17,7 +17,7 @@ $ ->
 				for msg in response.error.messages
 					$('.error').append('<div>'+msg+'</div>')
 				return
-			chrome.extension.sendMessage(method: 'getProjects', (response) ->
+			chrome.extension.sendMessage(method: 'downloadProjects', (response) ->
 				$body = $('#projects').find('tbody')
 				harvest = response.harvest
 				pivotal = response.pivotal

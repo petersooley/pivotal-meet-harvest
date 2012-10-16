@@ -15,16 +15,16 @@ class Timers
 	setup: ->
 		console.log 'setting up all'
 
+window.ERR = (msg) ->
+	alert(msg)
+	throw new Error(msg)
+
 
 $ ->
 	# Get user accounts data from localStorage from background.js
 	chrome.extension.sendMessage(method: 'login', (response) ->
-		console.log 'got response'
-
 		if response.error?
-			msg = 'Pivotal Meet Harvest Error: There was a problem logging in to the Pivotal Tracker API or the Harvest API. See extension options.'
-			alert(msg)
-			throw new Error(msg)
+			ERR('Pivotal Meet Harvest Error: There was a problem logging in to the Pivotal Tracker API or the Harvest API. See extension options.')
 
 		# Parse the URL to figure out the project ID and story ID
 		uri = document.location.href.split('/')
@@ -34,4 +34,9 @@ $ ->
 		storyId = null
 		if typeof uri[5] != 'undefined' and uri[5] == 'stories'
 			storyId = parseInt(uri[6])
+	)
+
+	# Get project mappings
+	chrome.extension.sendMessage(method: 'getProjects', (response) ->
+		console.log response
 	)

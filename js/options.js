@@ -27,7 +27,7 @@
           return;
         }
         return chrome.extension.sendMessage({
-          method: 'getProjects'
+          method: 'downloadProjects'
         }, function(response) {
           var $body, harvest, map, mapping, options, pivotal, project, _j, _k, _l, _len1, _len2, _len3, _results;
           $body = $('#projects').find('tbody');
