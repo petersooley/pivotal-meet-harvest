@@ -35,7 +35,7 @@
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         project = _ref[_i];
         name = $(project).find('name').first().text();
-        id = $(project).find('id').text();
+        id = $(project).find('id').first().text();
         projects.push({
           name: name,
           id: id
@@ -85,7 +85,6 @@
     Harvest.prototype.getAllProjects = function() {
       var code, data, id, name, project, projects, _i, _len, _ref;
       data = this.HTTP('projects');
-      console.log(data);
       projects = [];
       _ref = $(data).find('project');
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -169,7 +168,6 @@
       pivotalError = null;
       harvestError = null;
       if ((pUser != null) && (pPass != null) && (hUser != null) && (hPass != null)) {
-        console.log('logging in');
         try {
           this.pivotal = new Pivotal(pUser, pPass);
         } catch (e) {
@@ -194,7 +192,6 @@
 
     App.prototype.getProjects = function(sendResponse, error) {
       var harvestProjects, pivotalProjects;
-      console.log('getting projects');
       pivotalProjects = this.pivotal.getAllProjects();
       harvestProjects = this.harvest.getAllProjects();
       sendResponse({

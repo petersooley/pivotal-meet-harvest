@@ -22,7 +22,7 @@ class Pivotal
 		projects = []
 		for project in $(data).find('project')
 			name = $(project).find('name').first().text()
-			id = $(project).find('id').text()
+			id = $(project).find('id').first().text()
 			projects.push
 				name: name
 				id: id
@@ -53,7 +53,6 @@ class Harvest
 
 	getAllProjects: ->
 		data = @HTTP('projects')
-		console.log data
 		projects = []
 		for project in $(data).find('project')
 			name = $(project).find('name').text()
@@ -113,7 +112,6 @@ class App
 		pivotalError = null
 		harvestError = null
 		if pUser? and pPass? and hUser? and hPass?
-			console.log 'logging in'
 			try
 				@pivotal = new Pivotal(pUser, pPass)
 			catch e
@@ -133,7 +131,6 @@ class App
 		return false
 
 	getProjects: (sendResponse, error) ->
-		console.log 'getting projects'
 		pivotalProjects = @pivotal.getAllProjects()
 		harvestProjects = @harvest.getAllProjects()
 		sendResponse(
