@@ -1,0 +1,28 @@
+table td, table th {
+  min-width: 250px;
+  padding-left: 20px; }
+table th {
+  text-align: left; }
+
+body {
+  font-family: helvetica; }
+
+#form {
+  width: 250px;
+  position: relative; }
+  #form label {
+    width: 100px;
+    display: inline-block; }
+  #form input {
+    padding: 3px;
+    font-size: 1em; }
+  #form .field {
+    padding: 5px; }
+  #form .error {
+    color: red; }
+
+#projects {
+  padding-left: 30px;
+  margin-top: 0; }
+  #projects .code {
+    font-size: smaller; }

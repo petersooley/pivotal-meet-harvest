@@ -6,16 +6,16 @@
 	"content_scripts": [
 		{
 			"matches": ["https://www.pivotaltracker.com/*"],
-			"css": ["pivotal.css"],
-			"js": ["jquery.js", "timers.js"]
+			"css": ["css/pivotal.css"],
+			"js": ["lib/jquery.js", "js/timers.js"]
 		}
 	],
-	"options_page": "options.html",
+	"options_page": "html/options.html",
 	"permissions": [
 		"https://www.pivotaltracker.com/",
 		"https://*.harvestapp.com/"
 	],
 	"background": {
-		"scripts": ["jquery.js","base64.js","background.js"]
+		"scripts": ["lib/jquery.js","lib/base64.js","js/background.js"]
 	}
 }
