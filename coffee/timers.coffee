@@ -21,6 +21,7 @@ window.ERR = (msg) ->
 
 
 $ ->
+
 	# Get user accounts data from localStorage from background.js
 	chrome.extension.sendMessage(method: 'login', (response) ->
 		if response.error?
@@ -34,9 +35,12 @@ $ ->
 		storyId = null
 		if typeof uri[5] != 'undefined' and uri[5] == 'stories'
 			storyId = parseInt(uri[6])
+
+		# Get project mappings
+		chrome.extension.sendMessage(method: 'getHarvestProject', pivotalId: projectId, (harvestProject) ->
+
+			# TODO Set up timers here
+			
+		)
 	)
 
-	# Get project mappings
-	chrome.extension.sendMessage(method: 'getProjects', (response) ->
-		console.log response
-	)

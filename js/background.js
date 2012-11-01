@@ -153,6 +153,11 @@
               return true;
             }
             break;
+          case 'getHarvestProject':
+            if (_this.getHarvestProject(request.pivotalId, sendResponse, error)) {
+              return true;
+            }
+            break;
           default:
             error.messages.push("Unrecognized request method in sendMessage call.");
         }
@@ -204,6 +209,27 @@
         harvest: harvestProjects
       });
       return true;
+    };
+
+    App.prototype.getHarvestProject = function(pivotalId, sendResponse, error) {
+      var hProj, harvestId, harvestProjects, map, mapping, _i, _len;
+      if (localStorage['project_mapping'] != null) {
+        mapping = JSON.parse(localStorage['project_mapping']);
+        for (_i = 0, _len = mapping.length; _i < _len; _i++) {
+          map = mapping[_i];
+          if ('' + map.pivotal === '' + pivotalId) {
+            harvestId = map.harvest;
+            harvestProjects = this.harvest.getAllProjects();
+            hProj = this.findProject(harvestId, harvestProjects);
+            if (hProj) {
+              sendResponse(hProj);
+              return true;
+            }
+          }
+        }
+      }
+      error.messages.push("Could not find that project.");
+      return false;
     };
 
     App.prototype.getProjects = function(sendResponse, error) {

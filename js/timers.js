@@ -33,7 +33,7 @@
   };
 
   $(function() {
-    chrome.extension.sendMessage({
+    return chrome.extension.sendMessage({
       method: 'login'
     }, function(response) {
       var projectId, storyId, uri;
@@ -47,13 +47,12 @@
       projectId = parseInt(uri[4]);
       storyId = null;
       if (typeof uri[5] !== 'undefined' && uri[5] === 'stories') {
-        return storyId = parseInt(uri[6]);
+        storyId = parseInt(uri[6]);
       }
-    });
-    return chrome.extension.sendMessage({
-      method: 'getProjects'
-    }, function(response) {
-      return console.log(response);
+      return chrome.extension.sendMessage({
+        method: 'getHarvestProject',
+        pivotalId: projectId
+      }, function(harvestProject) {});
     });
   });
 
