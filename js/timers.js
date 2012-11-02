@@ -9,6 +9,7 @@
       this.pivotalProject = opts.pivotalProject;
       this.harvestProject = opts.harvestProject;
       this.storyId = opts.storyId;
+      this.html = opts.html;
       if (this.storyId != null) {
         this.setupSingle();
       } else {
@@ -54,15 +55,27 @@
         method: 'getProjectPair',
         pivotalId: projectId
       }, function(response) {
-        var t;
+        var harvestProject, pivotalProject;
         if (response.error != null) {
           ERR('This project is not mapped to any project in Harvest. See extension options.');
           return;
         }
-        return t = new Timers({
-          harvestProject: response.harvestProject,
-          storyId: storyId,
-          pivotalProject: response.pivotalProject
+        harvestProject = response.harvestProject;
+        pivotalProject = response.pivotalProject;
+        return chrome.extension.sendMessage({
+          method: 'getHtml'
+        }, function(response) {
+          var t;
+          if (response.error != null) {
+            ERR('Could not locate the needed html. Aborting.');
+            return;
+          }
+          return t = new Timers({
+            harvestProject: harvestProject,
+            storyId: storyId,
+            pivotalProject: pivotalProject,
+            html: response
+          });
         });
       });
     });

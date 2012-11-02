@@ -4,6 +4,7 @@ class Timers
 		@pivotalProject = opts.pivotalProject
 		@harvestProject = opts.harvestProject
 		@storyId = opts.storyId
+		@html = opts.html
 
 		if @storyId?
 			@setupSingle()
@@ -43,11 +44,20 @@ $ ->
 			if response.error?
 				ERR('This project is not mapped to any project in Harvest. See extension options.')
 				return
+			harvestProject = response.harvestProject
+			pivotalProject = response.pivotalProject
 
-			t = new Timers(
-				harvestProject: response.harvestProject,
-				storyId: storyId,
-				pivotalProject: response.pivotalProject
+			chrome.extension.sendMessage(method: 'getHtml', (response) ->
+				if response.error?
+					ERR('Could not locate the needed html. Aborting.')
+					return
+
+				t = new Timers(
+					harvestProject: harvestProject
+					storyId: storyId
+					pivotalProject: pivotalProject
+					html: response
+				)
 			)
 
 		)

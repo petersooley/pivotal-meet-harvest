@@ -158,6 +158,11 @@
               return true;
             }
             break;
+          case 'getHtml':
+            if (_this.getHtml(sendResponse, error)) {
+              return true;
+            }
+            break;
           default:
             error.messages.push("Unrecognized request method in sendMessage call.");
         }
@@ -167,6 +172,21 @@
         return true;
       });
     }
+
+    App.prototype.getHtml = function(sendResponse, error) {
+      $.ajax({
+        url: chrome.extension.getURL('html/timers.html'),
+        dataType: 'html',
+        success: sendResponse,
+        error: function() {
+          error.messages.push("Couldn't find html/timers.html");
+          return sendResponse({
+            error: error
+          });
+        }
+      });
+      return true;
+    };
 
     App.prototype.login = function(sendResponse, error) {
       var hPass, hSubdomain, hUser, harvestError, pPass, pUser, pivotalError;

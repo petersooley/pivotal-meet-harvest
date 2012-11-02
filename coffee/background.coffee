@@ -99,11 +99,24 @@ class App
 					return true if @getProjects(sendResponse, error)
 				when 'getProjectPair'
 					return true if @getProjectPair(request.pivotalId, sendResponse, error)
+				when 'getHtml'
+					return true if @getHtml(sendResponse, error)
 				else
 					error.messages.push "Unrecognized request method in sendMessage call."
 			sendResponse(error: error)
 			return true
 		)
+
+	getHtml: (sendResponse, error) ->
+		$.ajax(
+			url: chrome.extension.getURL('html/timers.html')
+			dataType: 'html'
+			success: sendResponse
+			error: ->
+				error.messages.push "Couldn't find html/timers.html"
+				sendResponse(error:error)
+		)
+		return true
 
 	login: (sendResponse, error) ->
 		pUser = localStorage['pivotal_username']
