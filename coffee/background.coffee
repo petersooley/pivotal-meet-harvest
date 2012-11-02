@@ -97,8 +97,8 @@ class App
 					return true if @downloadProjects(sendResponse, error)
 				when 'getProjects'
 					return true if @getProjects(sendResponse, error)
-				when 'getHarvestProject'
-					return true if @getHarvestProject(request.pivotalId, sendResponse, error)
+				when 'getProjectPair'
+					return true if @getProjectPair(request.pivotalId, sendResponse, error)
 				else
 					error.messages.push "Unrecognized request method in sendMessage call."
 			sendResponse(error: error)
@@ -139,16 +139,18 @@ class App
 		)
 		return true
 
-	getHarvestProject: (pivotalId, sendResponse, error) ->
+	getProjectPair: (pivotalId, sendResponse, error) ->
 		if localStorage['project_mapping']?
 			mapping = JSON.parse(localStorage['project_mapping'])
 			for map in mapping
 				if ''+map.pivotal == ''+pivotalId
 					harvestId = map.harvest
 					harvestProjects = @harvest.getAllProjects()
+					pivotalProjects = @pivotal.getAllProjects()
 					hProj = @findProject(harvestId, harvestProjects)
+					pProj = @findProject(pivotalId, pivotalProjects)
 					if hProj
-						sendResponse(hProj)
+						sendResponse(harvestProject: hProj, pivotalProject: pProj)
 						return true
 		error.messages.push "Could not find that project."
 		return false
@@ -180,7 +182,7 @@ class App
 
 	findProject: (id, projects) ->
 		for proj in projects
-			if proj.id == id
+			if ''+proj.id == ''+id
 				return proj
 
 app = new App()

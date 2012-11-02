@@ -153,8 +153,8 @@
               return true;
             }
             break;
-          case 'getHarvestProject':
-            if (_this.getHarvestProject(request.pivotalId, sendResponse, error)) {
+          case 'getProjectPair':
+            if (_this.getProjectPair(request.pivotalId, sendResponse, error)) {
               return true;
             }
             break;
@@ -211,8 +211,8 @@
       return true;
     };
 
-    App.prototype.getHarvestProject = function(pivotalId, sendResponse, error) {
-      var hProj, harvestId, harvestProjects, map, mapping, _i, _len;
+    App.prototype.getProjectPair = function(pivotalId, sendResponse, error) {
+      var hProj, harvestId, harvestProjects, map, mapping, pProj, pivotalProjects, _i, _len;
       if (localStorage['project_mapping'] != null) {
         mapping = JSON.parse(localStorage['project_mapping']);
         for (_i = 0, _len = mapping.length; _i < _len; _i++) {
@@ -220,9 +220,14 @@
           if ('' + map.pivotal === '' + pivotalId) {
             harvestId = map.harvest;
             harvestProjects = this.harvest.getAllProjects();
+            pivotalProjects = this.pivotal.getAllProjects();
             hProj = this.findProject(harvestId, harvestProjects);
+            pProj = this.findProject(pivotalId, pivotalProjects);
             if (hProj) {
-              sendResponse(hProj);
+              sendResponse({
+                harvestProject: hProj,
+                pivotalProject: pProj
+              });
               return true;
             }
           }
@@ -265,7 +270,7 @@
       var proj, _i, _len;
       for (_i = 0, _len = projects.length; _i < _len; _i++) {
         proj = projects[_i];
-        if (proj.id === id) {
+        if ('' + proj.id === '' + id) {
           return proj;
         }
       }

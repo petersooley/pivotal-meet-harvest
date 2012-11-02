@@ -5,9 +5,10 @@
   Timers = (function() {
 
     function Timers(opts) {
-      this.projectId = opts.projectId;
+      console.log(opts);
+      this.pivotalProject = opts.pivotalProject;
+      this.harvestProject = opts.harvestProject;
       this.storyId = opts.storyId;
-      this.pivotalToken = opts.pivotalToken;
       if (this.storyId != null) {
         this.setupSingle();
       } else {
@@ -28,7 +29,7 @@
   })();
 
   window.ERR = function(msg) {
-    alert(msg);
+    msg = 'Pivotal Meet Harvest Error: ' + msg;
     throw new Error(msg);
   };
 
@@ -38,7 +39,7 @@
     }, function(response) {
       var projectId, storyId, uri;
       if (response.error != null) {
-        ERR('Pivotal Meet Harvest Error: There was a problem logging in to the Pivotal Tracker API or the Harvest API. See extension options.');
+        ERR('There was a problem logging in to the Pivotal Tracker API or the Harvest API. See extension options.');
       }
       uri = document.location.href.split('/');
       if (typeof uri[4] === 'undefined' || uri[3] !== 'projects') {
@@ -50,9 +51,20 @@
         storyId = parseInt(uri[6]);
       }
       return chrome.extension.sendMessage({
-        method: 'getHarvestProject',
+        method: 'getProjectPair',
         pivotalId: projectId
-      }, function(harvestProject) {});
+      }, function(response) {
+        var t;
+        if (response.error != null) {
+          ERR('This project is not mapped to any project in Harvest. See extension options.');
+          return;
+        }
+        return t = new Timers({
+          harvestProject: response.harvestProject,
+          storyId: storyId,
+          pivotalProject: response.pivotalProject
+        });
+      });
     });
   });
 
