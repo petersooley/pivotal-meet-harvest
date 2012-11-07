@@ -5,11 +5,10 @@
   Timers = (function() {
 
     function Timers(opts) {
-      console.log(opts);
       this.pivotalProject = opts.pivotalProject;
       this.harvestProject = opts.harvestProject;
       this.storyId = opts.storyId;
-      this.html = opts.html;
+      this.$html = $(opts.html);
       if (this.storyId != null) {
         this.setupSingle();
       } else {
@@ -18,7 +17,16 @@
     }
 
     Timers.prototype.setupSingle = function() {
-      return console.log('setting up single');
+      var $harvest, timerHtml,
+        _this = this;
+      timerHtml = this.$html.find('#single-timer').html();
+      $('.details_sidebar ul.subset li.state').after(timerHtml);
+      $harvest = $('.details_sidebar ul.subset li.harvest');
+      $harvest.find('select').chosen();
+      return $harvest.find('.toggle').click(function() {
+        console.log(_this.pivotalProject);
+        return console.log(_this.harvestProject);
+      });
     };
 
     Timers.prototype.setup = function() {

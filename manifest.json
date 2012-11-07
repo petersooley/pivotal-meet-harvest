@@ -7,7 +7,8 @@
 		{
 			"matches": ["https://www.pivotaltracker.com/*"],
 			"css": ["css/pivotal.css"],
-			"js": ["lib/jquery.js", "js/timers.js"]
+			"js": ["lib/jquery.js", "lib/chosen.jquery.min.js", "js/timers.js"],
+			"run_at": "document_idle"
 		}
 	],
 	"options_page": "html/options.html",

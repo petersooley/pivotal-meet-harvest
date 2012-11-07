@@ -1,10 +1,9 @@
 class Timers
 	constructor: (opts) ->
-		console.log opts
 		@pivotalProject = opts.pivotalProject
 		@harvestProject = opts.harvestProject
 		@storyId = opts.storyId
-		@html = opts.html
+		@$html = $(opts.html)
 
 		if @storyId?
 			@setupSingle()
@@ -12,7 +11,14 @@ class Timers
 			@setup()
 
 	setupSingle: ->
-		console.log 'setting up single'
+		timerHtml = @$html.find('#single-timer').html()
+		$('.details_sidebar ul.subset li.state').after(timerHtml)
+		$harvest = $('.details_sidebar ul.subset li.harvest')
+		$harvest.find('select').chosen()
+		$harvest.find('.toggle').click(=>
+			console.log @pivotalProject
+			console.log @harvestProject
+		)
 
 	setup: ->
 		console.log 'setting up all'

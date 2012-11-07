@@ -1,1 +1,33 @@
-/** test */
+$height: 14px;
+
+@mixin button {
+	color: white;
+	text-align: center;
+	height: 10px;
+	line-height: 11px;
+	display: inline-block;
+	padding: 3px;
+	font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+	text-shadow: none;
+}
+
+.panel .details ul.subset li.harvest {
+	select {
+		width: 150px;
+	}
+	.timer {
+		background-color: black;
+		@include button;
+	}
+	.toggle {
+		margin-right: 0;
+		&:hover {
+			cursor: pointer;
+		}
+	}
+	.time {
+		margin-left: 0;
+		padding-right: 6px;
+		padding-left: 6px;
+	}
+}

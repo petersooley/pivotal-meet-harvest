@@ -1,1 +1,20 @@
-/** test */
+.panel .details ul.subset li.harvest select {
+  width: 150px; }
+.panel .details ul.subset li.harvest .timer {
+  background-color: black;
+  color: white;
+  text-align: center;
+  height: 10px;
+  line-height: 11px;
+  display: inline-block;
+  padding: 3px;
+  font-family: "Lucida Sans Unicode", "Lucida Grande", sans-serif;
+  text-shadow: none; }
+.panel .details ul.subset li.harvest .toggle {
+  margin-right: 0; }
+  .panel .details ul.subset li.harvest .toggle:hover {
+    cursor: pointer; }
+.panel .details ul.subset li.harvest .time {
+  margin-left: 0;
+  padding-right: 6px;
+  padding-left: 6px; }
