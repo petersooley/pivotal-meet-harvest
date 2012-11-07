@@ -1,7 +1,6 @@
 class Timers
 	constructor: (opts) ->
-		@pivotalProject = opts.pivotalProject
-		@harvestProject = opts.harvestProject
+		@projectId = opts.projectId
 		@storyId = opts.storyId
 		@$html = $(opts.html)
 
@@ -45,27 +44,12 @@ $ ->
 		if typeof uri[5] != 'undefined' and uri[5] == 'stories'
 			storyId = parseInt(uri[6])
 
-		# Get project mappings
-		chrome.extension.sendMessage(method: 'getProjectPair', pivotalId: projectId, (response) ->
-			if response.error?
-				ERR('This project is not mapped to any project in Harvest. See extension options.')
-				return
-			harvestProject = response.harvestProject
-			pivotalProject = response.pivotalProject
-
-			chrome.extension.sendMessage(method: 'getHtml', (response) ->
-				if response.error?
-					ERR('Could not locate the needed html. Aborting.')
-					return
-
-				t = new Timers(
-					harvestProject: harvestProject
-					storyId: storyId
-					pivotalProject: pivotalProject
-					html: response
-				)
-			)
-
+		t = new Timers(
+			storyId: storyId
+			projectId: projectId
+			html: response
 		)
+
+
 	)
 

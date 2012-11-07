@@ -5,8 +5,7 @@
   Timers = (function() {
 
     function Timers(opts) {
-      this.pivotalProject = opts.pivotalProject;
-      this.harvestProject = opts.harvestProject;
+      this.projectId = opts.projectId;
       this.storyId = opts.storyId;
       this.$html = $(opts.html);
       if (this.storyId != null) {
@@ -46,7 +45,7 @@
     return chrome.extension.sendMessage({
       method: 'login'
     }, function(response) {
-      var projectId, storyId, uri;
+      var projectId, storyId, t, uri;
       if (response.error != null) {
         ERR('There was a problem logging in to the Pivotal Tracker API or the Harvest API. See extension options.');
       }
@@ -59,32 +58,10 @@
       if (typeof uri[5] !== 'undefined' && uri[5] === 'stories') {
         storyId = parseInt(uri[6]);
       }
-      return chrome.extension.sendMessage({
-        method: 'getProjectPair',
-        pivotalId: projectId
-      }, function(response) {
-        var harvestProject, pivotalProject;
-        if (response.error != null) {
-          ERR('This project is not mapped to any project in Harvest. See extension options.');
-          return;
-        }
-        harvestProject = response.harvestProject;
-        pivotalProject = response.pivotalProject;
-        return chrome.extension.sendMessage({
-          method: 'getHtml'
-        }, function(response) {
-          var t;
-          if (response.error != null) {
-            ERR('Could not locate the needed html. Aborting.');
-            return;
-          }
-          return t = new Timers({
-            harvestProject: harvestProject,
-            storyId: storyId,
-            pivotalProject: pivotalProject,
-            html: response
-          });
-        });
+      return t = new Timers({
+        storyId: storyId,
+        projectId: projectId,
+        html: response
       });
     });
   });

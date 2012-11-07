@@ -143,26 +143,6 @@
               return true;
             }
             break;
-          case 'downloadProjects':
-            if (_this.downloadProjects(sendResponse, error)) {
-              return true;
-            }
-            break;
-          case 'getProjects':
-            if (_this.getProjects(sendResponse, error)) {
-              return true;
-            }
-            break;
-          case 'getProjectPair':
-            if (_this.getProjectPair(request.pivotalId, sendResponse, error)) {
-              return true;
-            }
-            break;
-          case 'getHtml':
-            if (_this.getHtml(sendResponse, error)) {
-              return true;
-            }
-            break;
           default:
             error.messages.push("Unrecognized request method in sendMessage call.");
         }
@@ -189,14 +169,12 @@
     };
 
     App.prototype.login = function(sendResponse, error) {
-      var hPass, hSubdomain, hUser, harvestError, pPass, pUser, pivotalError;
+      var hPass, hSubdomain, hUser, pPass, pUser;
       pUser = localStorage['pivotal_username'];
       pPass = localStorage['pivotal_password'];
       hUser = localStorage['harvest_username'];
       hPass = localStorage['harvest_password'];
       hSubdomain = localStorage['harvest_subdomain'];
-      pivotalError = null;
-      harvestError = null;
       if ((pUser != null) && (pPass != null) && (hUser != null) && (hPass != null)) {
         try {
           this.pivotal = new Pivotal(pUser, pPass);
@@ -209,9 +187,7 @@
           error.messages.push(e.message);
         }
         if (error.messages.length === 0) {
-          sendResponse({
-            success: true
-          });
+          this.getHtml(sendResponse, error);
           return true;
         }
       } else {

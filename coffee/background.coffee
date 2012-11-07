@@ -93,14 +93,6 @@ class App
 			switch request.method
 				when 'login'
 					return true if @login(sendResponse, error)
-				when 'downloadProjects'
-					return true if @downloadProjects(sendResponse, error)
-				when 'getProjects'
-					return true if @getProjects(sendResponse, error)
-				when 'getProjectPair'
-					return true if @getProjectPair(request.pivotalId, sendResponse, error)
-				when 'getHtml'
-					return true if @getHtml(sendResponse, error)
 				else
 					error.messages.push "Unrecognized request method in sendMessage call."
 			sendResponse(error: error)
@@ -124,8 +116,7 @@ class App
 		hUser = localStorage['harvest_username']
 		hPass = localStorage['harvest_password']
 		hSubdomain = localStorage['harvest_subdomain']
-		pivotalError = null
-		harvestError = null
+
 		if pUser? and pPass? and hUser? and hPass?
 			try
 				@pivotal = new Pivotal(pUser, pPass)
@@ -137,7 +128,7 @@ class App
 				error.messages.push e.message
 
 			if error.messages.length == 0
-				sendResponse(success: true)
+				@getHtml(sendResponse, error)
 				return true
 		else
 			error.messages.push "Missing login information. See options page."
