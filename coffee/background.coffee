@@ -1,4 +1,4 @@
-class Pivotal
+class PivotalAPI
 	constructor: (user, pass) ->
 		@url = 'https://www.pivotaltracker.com/services/v3/'
 		# Get the user's token
@@ -14,7 +14,7 @@ class Pivotal
 				$guid = $(data).find('guid')
 				self.token = $guid.text()
 			error: (xhr, status, error) ->
-				throw Error('Pivotal Tracker login failure.')
+				throw Error('There was a problem logging in to the Pivotal Tracker API. See options page.')
 		)
 
 	getAllProjects: ->
@@ -44,12 +44,12 @@ class Pivotal
 		)
 		return returnData
 
-class Harvest
+class HarvestAPI
 	constructor: (@user, @pass, @subdomain) ->
 		# Run a test to be sure that logging in works.
 		result = @HTTP('account/who_am_i')
 		if result == false
-			throw Error('Harvest login failure.')
+			throw Error('There was a problem logging in to the Harvest API. See options page.')
 
 	getAllProjects: ->
 		data = @HTTP('projects')
@@ -84,20 +84,74 @@ class Harvest
 
 class App
 	constructor: ->
-		@pivotal = {}
-		@harvest = {}
-
 		chrome.extension.onMessage.addListener((request, sender, sendResponse) =>
 			error = {}
 			error.messages = []
 			switch request.method
 				when 'login'
-					return true if @login(sendResponse, error)
+					return true if @login(request, sendResponse, error)
+				when 'toggle'
+					return true if @toggle(request, sendResponse, error)
+				when 'get'
+					return true if @get(request, sendResponse, error)
+				when 'edit'
+					return true if @edit(request, sendResponse, error)
 				else
 					error.messages.push "Unrecognized request method in sendMessage call."
 			sendResponse(error: error)
 			return true
 		)
+
+	# Create/start/stop a timer
+	# data <-- storyId, description
+	# returns hours and whether it started or stopped
+	toggle: (data, sendResponse, error) ->
+
+
+	get: (data, sendResponse, error) ->
+
+	edit: (data, sendResponse, error) ->
+
+	# Logs in to both HarvestAPI and PivotalAPI using settings from options page
+	# data <-- projectId
+	# returns the html needed for harvest timer buttons
+	login: (data, sendResponse, error) ->
+		pUser = localStorage['pivotal_username']
+		pPass = localStorage['pivotal_password']
+		hUser = localStorage['harvest_username']
+		hPass = localStorage['harvest_password']
+		hSubdomain = localStorage['harvest_subdomain']
+
+		# Get the Pivotal/Harvest mapping
+		@pivotalId = data.projectId
+		@harvestProjectId = false
+		for map in JSON.parse(localStorage['project_mapping'])
+			console.log map
+			if map.pivotal+'' == @pivotalId+''
+				@harvestProjectId = map.harvest
+				break
+		if !@harvestProjectId
+			error.messages.push "This project is not mapped to a Harvest project. See options page."
+			return false
+
+		# Create HarvestAPI and PivotalAPI thereby logging in
+		if pUser? and pPass? and hUser? and hPass?
+			try
+				@pivotalAPI = new PivotalAPI(pUser, pPass)
+			catch e
+				error.messages.push e.message
+			try
+				@harvestAPI = new HarvestAPI(hUser, hPass, hSubdomain)
+			catch e
+				error.messages.push e.message
+
+			if error.messages.length == 0
+				# Return the html for the dynamic harvest timers
+				@getHtml(sendResponse, error)
+				return true
+		else
+			error.messages.push "Missing login information. See options page."
+		return false
 
 	getHtml: (sendResponse, error) ->
 		$.ajax(
@@ -109,84 +163,5 @@ class App
 				sendResponse(error:error)
 		)
 		return true
-
-	login: (sendResponse, error) ->
-		pUser = localStorage['pivotal_username']
-		pPass = localStorage['pivotal_password']
-		hUser = localStorage['harvest_username']
-		hPass = localStorage['harvest_password']
-		hSubdomain = localStorage['harvest_subdomain']
-
-		if pUser? and pPass? and hUser? and hPass?
-			try
-				@pivotal = new Pivotal(pUser, pPass)
-			catch e
-				error.messages.push e.message
-			try
-				@harvest = new Harvest(hUser, hPass, hSubdomain)
-			catch e
-				error.messages.push e.message
-
-			if error.messages.length == 0
-				@getHtml(sendResponse, error)
-				return true
-		else
-			error.messages.push "Missing login information. See options page."
-		return false
-
-	downloadProjects: (sendResponse, error) ->
-		pivotalProjects = @pivotal.getAllProjects()
-		harvestProjects = @harvest.getAllProjects()
-		sendResponse(
-			pivotal: pivotalProjects
-			harvest: harvestProjects
-		)
-		return true
-
-	getProjectPair: (pivotalId, sendResponse, error) ->
-		if localStorage['project_mapping']?
-			mapping = JSON.parse(localStorage['project_mapping'])
-			for map in mapping
-				if ''+map.pivotal == ''+pivotalId
-					harvestId = map.harvest
-					harvestProjects = @harvest.getAllProjects()
-					pivotalProjects = @pivotal.getAllProjects()
-					hProj = @findProject(harvestId, harvestProjects)
-					pProj = @findProject(pivotalId, pivotalProjects)
-					if hProj
-						sendResponse(harvestProject: hProj, pivotalProject: pProj)
-						return true
-		error.messages.push "Could not find that project."
-		return false
-
-	# Download the projects and include the mapping as data
-	getProjects: (sendResponse, error) ->
-		if localStorage['project_mapping']?
-			mapping = JSON.parse(localStorage['project_mapping'])
-
-			pivotalProjects = @pivotal.getAllProjects()
-			harvestProjects = @harvest.getAllProjects()
-
-			projects = []
-			for map in mapping
-				pProj = @findProject(map.pivotal, pivotalProjects)
-				hProj = @findProject(map.harvest, harvestProjects)
-				projects.push
-					pivotalId: pProj.id
-					pivotalName: pProj.name
-					harvestId: hProj.id
-					harevestName: hProj.name
-					harevestCode: hProj.code
-
-			sendResponse(projects: projects)
-			return true
-		else
-			error.messages.push "No projects mapped yet. See options page."
-			return false
-
-	findProject: (id, projects) ->
-		for proj in projects
-			if ''+proj.id == ''+id
-				return proj
 
 app = new App()

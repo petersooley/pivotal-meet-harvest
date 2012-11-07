@@ -42,21 +42,24 @@
   };
 
   $(function() {
+    var projectId, storyId, uri;
+    uri = document.location.href.split('/');
+    if (typeof uri[4] === 'undefined' || uri[3] !== 'projects') {
+      return;
+    }
+    projectId = parseInt(uri[4]);
+    storyId = null;
+    if (typeof uri[5] !== 'undefined' && uri[5] === 'stories') {
+      storyId = parseInt(uri[6]);
+    }
     return chrome.extension.sendMessage({
-      method: 'login'
+      method: 'login',
+      projectId: projectId
     }, function(response) {
-      var projectId, storyId, t, uri;
+      var t;
       if (response.error != null) {
-        ERR('There was a problem logging in to the Pivotal Tracker API or the Harvest API. See extension options.');
-      }
-      uri = document.location.href.split('/');
-      if (typeof uri[4] === 'undefined' || uri[3] !== 'projects') {
-        return;
-      }
-      projectId = parseInt(uri[4]);
-      storyId = null;
-      if (typeof uri[5] !== 'undefined' && uri[5] === 'stories') {
-        storyId = parseInt(uri[6]);
+        ERR(response.error.messages);
+        return false;
       }
       return t = new Timers({
         storyId: storyId,
