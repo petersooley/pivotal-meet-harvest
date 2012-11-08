@@ -84,7 +84,7 @@
 
     HarvestAPI.prototype.getAllProjects = function() {
       var code, data, id, name, project, projects, _i, _len, _ref;
-      data = this.HTTP('projects');
+      data = this.GET('projects');
       projects = [];
       _ref = $(data).find('project');
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -101,12 +101,29 @@
       return projects;
     };
 
-    HarvestAPI.prototype.HTTP = function(path) {
+    HarvestAPI.prototype.createEntry = function(harvestProjectId, notes, hours, taskId) {};
+
+    HarvestAPI.prototype.toggleEntry = function(harvestProjectId, entryId) {};
+
+    HarvestAPI.prototype.getEntry = function(harvestProjectId, entryid) {};
+
+    HarvestAPI.prototype.editEntry = function(harvestProjectId, entryId, notes, hours, taskId) {};
+
+    HarvestAPI.prototype.GET = function(path) {
+      return this.HTTP('GET', path, null);
+    };
+
+    HarvestAPI.prototype.POST = function(path, data) {
+      return this.HTTP('POST', path, data);
+    };
+
+    HarvestAPI.prototype.HTTP = function(method, path, data) {
       var returnData;
       returnData = {};
       $.ajax({
         url: 'https://' + this.subdomain + '.harvestapp.com/' + path,
-        type: 'GET',
+        type: method,
+        data: data,
         async: false,
         headers: {
           'Content-Type': 'application/xml',
@@ -131,6 +148,7 @@
 
     function App() {
       var _this = this;
+      this.entries = [];
       chrome.extension.onMessage.addListener(function(request, sender, sendResponse) {
         var error;
         error = {};
@@ -166,26 +184,74 @@
       });
     }
 
-    App.prototype.toggle = function(data, sendResponse, error) {};
+    App.prototype.toggle = function(data, sendResponse, error) {
+      var e, entryId, isStarted, _i, _len, _ref;
+      return true;
+      _ref = this.entries;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        e = _ref[_i];
+        if (e.storyId === data.storyId) {
+          entryId = e.entryId;
+          break;
+        }
+      }
+      if (!(entryId != null)) {
+        entryId = this.harvestAPI.createEntry(this.harvestProjectId, data.description, 0, data.taskId);
+        this.entries.push(entryId);
+      }
+      isStarted = this.harvestAPI.toggleEntry(this.harvestProjectId, entryId);
+      sendResponse({
+        isStarted: isStarted
+      });
+      return true;
+    };
 
-    App.prototype.get = function(data, sendResponse, error) {};
+    App.prototype.get = function(data, sendResponse, error) {
+      var e, entry, _i, _len, _ref;
+      _ref = this.entries;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        e = _ref[_i];
+        if (e.storyId === data.storyId) {
+          entry = this.harvestAPI.getEntry(this.harvestProjectId, e.entryId);
+          sendResponse(entry);
+          return true;
+        }
+      }
+    };
 
-    App.prototype.edit = function(data, sendResponse, error) {};
+    App.prototype.edit = function(data, sendResponse, error) {
+      var e, entryId, _i, _len, _ref;
+      _ref = this.entries;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        e = _ref[_i];
+        if (e.storyId === data.storyId) {
+          entryId = e.entryId;
+          break;
+        }
+      }
+      if (!(entryId != null)) {
+        entryId = this.harvestAPI.createEntry(this.harvestProjectId, data.description, data.hours, data.taskId);
+        this.entries.push(entryId);
+      } else {
+        this.harvestAPI.editEntry(this.harvestProjectId, entryId, data.description, data.hours, data.taskId);
+      }
+      return sendResponse({
+        success: true
+      });
+    };
 
     App.prototype.login = function(data, sendResponse, error) {
-      var hPass, hSubdomain, hUser, map, pPass, pUser, _i, _len, _ref;
-      pUser = localStorage['pivotal_username'];
-      pPass = localStorage['pivotal_password'];
+      var hPass, hSubdomain, hUser, map, _i, _len, _ref;
       hUser = localStorage['harvest_username'];
       hPass = localStorage['harvest_password'];
       hSubdomain = localStorage['harvest_subdomain'];
-      this.pivotalId = data.projectId;
+      this.pivotalProjectId = data.projectId;
       this.harvestProjectId = false;
       _ref = JSON.parse(localStorage['project_mapping']);
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         map = _ref[_i];
         console.log(map);
-        if (map.pivotal + '' === this.pivotalId + '') {
+        if (map.pivotal + '' === this.pivotalProjectId + '') {
           this.harvestProjectId = map.harvest;
           break;
         }
@@ -194,12 +260,7 @@
         error.messages.push("This project is not mapped to a Harvest project. See options page.");
         return false;
       }
-      if ((pUser != null) && (pPass != null) && (hUser != null) && (hPass != null)) {
-        try {
-          this.pivotalAPI = new PivotalAPI(pUser, pPass);
-        } catch (e) {
-          error.messages.push(e.message);
-        }
+      if ((hUser != null) && (hPass != null) && (hSubdomain != null)) {
         try {
           this.harvestAPI = new HarvestAPI(hUser, hPass, hSubdomain);
         } catch (e) {

@@ -15,8 +15,9 @@ class Timers
 		$harvest = $('.details_sidebar ul.subset li.harvest')
 		$harvest.find('select').chosen()
 		$harvest.find('.toggle').click(=>
-			console.log @pivotalProject
-			console.log @harvestProject
+			chrome.extension.sendMessage(method: 'toggle',	description: 'my test entry', taskId: 319532, (response) ->
+				console.log response
+			)
 		)
 
 	setup: ->

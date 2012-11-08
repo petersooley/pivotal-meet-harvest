@@ -23,8 +23,13 @@
       $harvest = $('.details_sidebar ul.subset li.harvest');
       $harvest.find('select').chosen();
       return $harvest.find('.toggle').click(function() {
-        console.log(_this.pivotalProject);
-        return console.log(_this.harvestProject);
+        return chrome.extension.sendMessage({
+          method: 'toggle',
+          description: 'my test entry',
+          taskId: 319532
+        }, function(response) {
+          return console.log(response);
+        });
       });
     };
 

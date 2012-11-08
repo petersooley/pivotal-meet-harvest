@@ -52,7 +52,7 @@ class HarvestAPI
 			throw Error('There was a problem logging in to the Harvest API. See options page.')
 
 	getAllProjects: ->
-		data = @HTTP('projects')
+		data = @GET('projects')
 		projects = []
 		for project in $(data).find('project')
 			name = $(project).find('name').text()
@@ -64,12 +64,26 @@ class HarvestAPI
 				code: code
 		return projects
 
+	createEntry: (harvestProjectId, notes, hours, taskId) ->
 
-	HTTP: (path) ->
+	toggleEntry: (harvestProjectId, entryId) ->
+
+	getEntry: (harvestProjectId, entryid) ->
+
+	editEntry: (harvestProjectId, entryId, notes, hours, taskId) ->
+
+	GET: (path) ->
+		return @HTTP('GET', path, null)
+
+	POST: (path, data) ->
+		return @HTTP('POST', path, data)
+
+	HTTP: (method, path, data) ->
 		returnData = {}
 		$.ajax(
 			url: 'https://'+@subdomain+'.harvestapp.com/'+path
-			type: 'GET'
+			type: method
+			data: data
 			async: false
 			headers:
 				'Content-Type': 'application/xml'
@@ -84,6 +98,7 @@ class HarvestAPI
 
 class App
 	constructor: ->
+		@entries = []
 		chrome.extension.onMessage.addListener((request, sender, sendResponse) =>
 			error = {}
 			error.messages = []
@@ -103,43 +118,68 @@ class App
 		)
 
 	# Create/start/stop a timer
-	# data <-- storyId, description
-	# returns hours and whether it started or stopped
+	# data <-- storyId, description, taskId
+	# returns whether it's running
 	toggle: (data, sendResponse, error) ->
+		return true
+		for e in @entries
+			if e.storyId == data.storyId
+				entryId = e.entryId
+				break
+		if !entryId?
+			entryId = @harvestAPI.createEntry(@harvestProjectId, data.description, 0, data.taskId)
+			@entries.push entryId
+		isStarted = @harvestAPI.toggleEntry(@harvestProjectId, entryId)
+		sendResponse(isStarted: isStarted)
+		return true
 
 
+	# Look for a timer for the given story
+	# data <-- storyId
+	# returns details about the entry (hours, whether it's running, etc.)
 	get: (data, sendResponse, error) ->
+		for e in @entries
+			if e.storyId == data.storyId
+				entry = @harvestAPI.getEntry(@harvestProjectId, e.entryId)
+				sendResponse(entry)
+				return true
 
+	# Edits an existing timer or creates it
+	# data <-- storyId, description, hours, taskId
 	edit: (data, sendResponse, error) ->
+		for e in @entries
+			if e.storyId == data.storyId
+				entryId = e.entryId
+				break
+		if !entryId?
+			entryId = @harvestAPI.createEntry(@harvestProjectId, data.description, data.hours, data.taskId)
+			@entries.push entryId
+		else
+			@harvestAPI.editEntry(@harvestProjectId, entryId, data.description, data.hours, data.taskId)
+		sendResponse(success: true)
 
 	# Logs in to both HarvestAPI and PivotalAPI using settings from options page
 	# data <-- projectId
 	# returns the html needed for harvest timer buttons
 	login: (data, sendResponse, error) ->
-		pUser = localStorage['pivotal_username']
-		pPass = localStorage['pivotal_password']
 		hUser = localStorage['harvest_username']
 		hPass = localStorage['harvest_password']
 		hSubdomain = localStorage['harvest_subdomain']
 
 		# Get the Pivotal/Harvest mapping
-		@pivotalId = data.projectId
+		@pivotalProjectId = data.projectId
 		@harvestProjectId = false
 		for map in JSON.parse(localStorage['project_mapping'])
 			console.log map
-			if map.pivotal+'' == @pivotalId+''
+			if map.pivotal+'' == @pivotalProjectId+''
 				@harvestProjectId = map.harvest
 				break
 		if !@harvestProjectId
 			error.messages.push "This project is not mapped to a Harvest project. See options page."
 			return false
 
-		# Create HarvestAPI and PivotalAPI thereby logging in
-		if pUser? and pPass? and hUser? and hPass?
-			try
-				@pivotalAPI = new PivotalAPI(pUser, pPass)
-			catch e
-				error.messages.push e.message
+		# Create HarvestAPI thereby logging in
+		if hUser? and hPass? and hSubdomain?
 			try
 				@harvestAPI = new HarvestAPI(hUser, hPass, hSubdomain)
 			catch e
