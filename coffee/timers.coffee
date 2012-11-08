@@ -2,6 +2,7 @@ class Timers
 	constructor: (opts) ->
 		@projectId = opts.projectId
 		@storyId = opts.storyId
+		@tasks = opts.tasks
 		@$html = $(opts.html)
 
 		if @storyId?
@@ -13,7 +14,10 @@ class Timers
 		timerHtml = @$html.find('#single-timer').html()
 		$('.details_sidebar ul.subset li.state').after(timerHtml)
 		$harvest = $('.details_sidebar ul.subset li.harvest')
-		$harvest.find('select').chosen()
+		$select = $harvest.find('select')
+		for task in @tasks
+			$select.append('<option value="'+task.id+'">'+task.name+'</option>')
+		$select.chosen()
 		$harvest.find('.toggle').click(=>
 			chrome.extension.sendMessage(method: 'toggle',	description: 'my test entry', taskId: 319532, (response) ->
 				console.log response
@@ -49,7 +53,8 @@ $ ->
 		t = new Timers(
 			storyId: storyId
 			projectId: projectId
-			html: response
+			html: response.html
+			tasks: response.tasks
 		)
 
 

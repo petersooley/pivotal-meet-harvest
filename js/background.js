@@ -76,7 +76,7 @@
       this.user = user;
       this.pass = pass;
       this.subdomain = subdomain;
-      result = this.HTTP('account/who_am_i');
+      result = this.GET('account/who_am_i');
       if (result === false) {
         throw Error('There was a problem logging in to the Harvest API. See options page.');
       }
@@ -103,11 +103,55 @@
 
     HarvestAPI.prototype.createEntry = function(harvestProjectId, notes, hours, taskId) {};
 
-    HarvestAPI.prototype.toggleEntry = function(harvestProjectId, entryId) {};
+    HarvestAPI.prototype.toggleEntry = function(entryId) {};
 
-    HarvestAPI.prototype.getEntry = function(harvestProjectId, entryid) {};
+    HarvestAPI.prototype.getEntry = function(entryid) {};
 
-    HarvestAPI.prototype.editEntry = function(harvestProjectId, entryId, notes, hours, taskId) {};
+    HarvestAPI.prototype.editEntry = function(entryId, notes, hours, taskId) {};
+
+    HarvestAPI.prototype.getTodaysEntriesAndTasks = function(harvestProjectId) {
+      var daily, e, entries, entry, id, project, running, t, task, tasks, _i, _j, _k, _len, _len1, _len2, _ref, _ref1, _ref2;
+      daily = this.GET('daily');
+      entries = [];
+      tasks = [];
+      console.log(daily);
+      _ref = $(daily).find('project');
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        project = _ref[_i];
+        id = $(project).children('id')[0];
+        if ((id != null) && $(id).text() === '' + harvestProjectId) {
+          _ref1 = $(project).find('task');
+          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+            task = _ref1[_j];
+            t = {
+              name: $($(task).find('name')[0]).text(),
+              id: $($(task).find('id')[0]).text(),
+              billable: $($(task).find('billable')[0]).text()
+            };
+            tasks.push(t);
+          }
+          break;
+        }
+      }
+      _ref2 = $(daily).find('day_entry');
+      for (_k = 0, _len2 = _ref2.length; _k < _len2; _k++) {
+        entry = _ref2[_k];
+        if ($($(entry).find('project_id')[0]).text() === '' + harvestProjectId) {
+          running = $(entry).find('timer_started_at')[0] != null ? true : false;
+          e = {
+            id: $($(entry).find('id')[0]).text(),
+            hours: $($(entry).find('hours')[0]).text(),
+            running: running
+          };
+          entries.push(e);
+          break;
+        }
+      }
+      return {
+        entries: entries,
+        tasks: tasks
+      };
+    };
 
     HarvestAPI.prototype.GET = function(path) {
       return this.HTTP('GET', path, null);
@@ -197,9 +241,11 @@
       }
       if (!(entryId != null)) {
         entryId = this.harvestAPI.createEntry(this.harvestProjectId, data.description, 0, data.taskId);
-        this.entries.push(entryId);
+        this.entries.push({
+          entryId: entryId
+        });
       }
-      isStarted = this.harvestAPI.toggleEntry(this.harvestProjectId, entryId);
+      isStarted = this.harvestAPI.toggleEntry(entryId);
       sendResponse({
         isStarted: isStarted
       });
@@ -212,7 +258,7 @@
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         e = _ref[_i];
         if (e.storyId === data.storyId) {
-          entry = this.harvestAPI.getEntry(this.harvestProjectId, e.entryId);
+          entry = this.harvestAPI.getEntry(e.entryId);
           sendResponse(entry);
           return true;
         }
@@ -231,9 +277,11 @@
       }
       if (!(entryId != null)) {
         entryId = this.harvestAPI.createEntry(this.harvestProjectId, data.description, data.hours, data.taskId);
-        this.entries.push(entryId);
+        this.entries.push({
+          entryId: entryId
+        });
       } else {
-        this.harvestAPI.editEntry(this.harvestProjectId, entryId, data.description, data.hours, data.taskId);
+        this.harvestAPI.editEntry(entryId, data.description, data.hours, data.taskId);
       }
       return sendResponse({
         success: true
@@ -241,7 +289,7 @@
     };
 
     App.prototype.login = function(data, sendResponse, error) {
-      var hPass, hSubdomain, hUser, map, _i, _len, _ref;
+      var hPass, hSubdomain, hUser, map, result, _i, _len, _ref;
       hUser = localStorage['harvest_username'];
       hPass = localStorage['harvest_password'];
       hSubdomain = localStorage['harvest_subdomain'];
@@ -250,7 +298,6 @@
       _ref = JSON.parse(localStorage['project_mapping']);
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         map = _ref[_i];
-        console.log(map);
         if (map.pivotal + '' === this.pivotalProjectId + '') {
           this.harvestProjectId = map.harvest;
           break;
@@ -267,7 +314,12 @@
           error.messages.push(e.message);
         }
         if (error.messages.length === 0) {
-          this.getHtml(sendResponse, error);
+          result = this.harvestAPI.getTodaysEntriesAndTasks(this.harvestProjectId);
+          this.entries = result.entries;
+          sendResponse({
+            html: this.getHtml(),
+            tasks: result.tasks
+          });
           return true;
         }
       } else {
@@ -276,19 +328,18 @@
       return false;
     };
 
-    App.prototype.getHtml = function(sendResponse, error) {
+    App.prototype.getHtml = function(error) {
+      var returnData;
+      returnData = {};
       $.ajax({
         url: chrome.extension.getURL('html/timers.html'),
         dataType: 'html',
-        success: sendResponse,
-        error: function() {
-          error.messages.push("Couldn't find html/timers.html");
-          return sendResponse({
-            error: error
-          });
+        async: false,
+        success: function(data) {
+          return returnData = data;
         }
       });
-      return true;
+      return returnData;
     };
 
     return App;

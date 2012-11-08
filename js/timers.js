@@ -7,6 +7,7 @@
     function Timers(opts) {
       this.projectId = opts.projectId;
       this.storyId = opts.storyId;
+      this.tasks = opts.tasks;
       this.$html = $(opts.html);
       if (this.storyId != null) {
         this.setupSingle();
@@ -16,12 +17,18 @@
     }
 
     Timers.prototype.setupSingle = function() {
-      var $harvest, timerHtml,
+      var $harvest, $select, task, timerHtml, _i, _len, _ref,
         _this = this;
       timerHtml = this.$html.find('#single-timer').html();
       $('.details_sidebar ul.subset li.state').after(timerHtml);
       $harvest = $('.details_sidebar ul.subset li.harvest');
-      $harvest.find('select').chosen();
+      $select = $harvest.find('select');
+      _ref = this.tasks;
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        task = _ref[_i];
+        $select.append('<option value="' + task.id + '">' + task.name + '</option>');
+      }
+      $select.chosen();
       return $harvest.find('.toggle').click(function() {
         return chrome.extension.sendMessage({
           method: 'toggle',
@@ -69,7 +76,8 @@
       return t = new Timers({
         storyId: storyId,
         projectId: projectId,
-        html: response
+        html: response.html,
+        tasks: response.tasks
       });
     });
   });

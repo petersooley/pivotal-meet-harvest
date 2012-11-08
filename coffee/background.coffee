@@ -47,7 +47,7 @@ class PivotalAPI
 class HarvestAPI
 	constructor: (@user, @pass, @subdomain) ->
 		# Run a test to be sure that logging in works.
-		result = @HTTP('account/who_am_i')
+		result = @GET('account/who_am_i')
 		if result == false
 			throw Error('There was a problem logging in to the Harvest API. See options page.')
 
@@ -66,11 +66,45 @@ class HarvestAPI
 
 	createEntry: (harvestProjectId, notes, hours, taskId) ->
 
-	toggleEntry: (harvestProjectId, entryId) ->
+	toggleEntry: (entryId) ->
 
-	getEntry: (harvestProjectId, entryid) ->
+	getEntry: (entryid) ->
 
-	editEntry: (harvestProjectId, entryId, notes, hours, taskId) ->
+	editEntry: (entryId, notes, hours, taskId) ->
+
+	getTodaysEntriesAndTasks: (harvestProjectId) ->
+		daily = @GET('daily')
+		entries = []
+		tasks = []
+		console.log daily
+		# Find the tasks for this project
+		for project in $(daily).find('project')
+			id = $(project).children('id')[0]
+			if id? and $(id).text() == ''+harvestProjectId
+				for task in $(project).find('task')
+					t =
+						name: $($(task).find('name')[0]).text()
+						id: $($(task).find('id')[0]).text()
+						billable: $($(task).find('billable')[0]).text()
+					tasks.push t
+				break
+
+		# Find any entries for this project and for today
+		for entry in $(daily).find('day_entry')
+			if $($(entry).find('project_id')[0]).text() == ''+harvestProjectId
+				running = if $(entry).find('timer_started_at')[0]? then true else false
+
+					## TODO GET ENTRY TASK!!!!
+
+
+				e =
+					id: $($(entry).find('id')[0]).text()
+					hours: $($(entry).find('hours')[0]).text()
+					running: running
+				entries.push e
+				break
+		return entries: entries, tasks: tasks
+
 
 	GET: (path) ->
 		return @HTTP('GET', path, null)
@@ -128,8 +162,8 @@ class App
 				break
 		if !entryId?
 			entryId = @harvestAPI.createEntry(@harvestProjectId, data.description, 0, data.taskId)
-			@entries.push entryId
-		isStarted = @harvestAPI.toggleEntry(@harvestProjectId, entryId)
+			@entries.push entryId: entryId
+		isStarted = @harvestAPI.toggleEntry(entryId)
 		sendResponse(isStarted: isStarted)
 		return true
 
@@ -140,7 +174,7 @@ class App
 	get: (data, sendResponse, error) ->
 		for e in @entries
 			if e.storyId == data.storyId
-				entry = @harvestAPI.getEntry(@harvestProjectId, e.entryId)
+				entry = @harvestAPI.getEntry(e.entryId)
 				sendResponse(entry)
 				return true
 
@@ -153,9 +187,9 @@ class App
 				break
 		if !entryId?
 			entryId = @harvestAPI.createEntry(@harvestProjectId, data.description, data.hours, data.taskId)
-			@entries.push entryId
+			@entries.push entryId: entryId
 		else
-			@harvestAPI.editEntry(@harvestProjectId, entryId, data.description, data.hours, data.taskId)
+			@harvestAPI.editEntry(entryId, data.description, data.hours, data.taskId)
 		sendResponse(success: true)
 
 	# Logs in to both HarvestAPI and PivotalAPI using settings from options page
@@ -170,7 +204,6 @@ class App
 		@pivotalProjectId = data.projectId
 		@harvestProjectId = false
 		for map in JSON.parse(localStorage['project_mapping'])
-			console.log map
 			if map.pivotal+'' == @pivotalProjectId+''
 				@harvestProjectId = map.harvest
 				break
@@ -186,22 +219,23 @@ class App
 				error.messages.push e.message
 
 			if error.messages.length == 0
-				# Return the html for the dynamic harvest timers
-				@getHtml(sendResponse, error)
+				result = @harvestAPI.getTodaysEntriesAndTasks(@harvestProjectId)
+				@entries = result.entries
+				sendResponse(html: @getHtml(), tasks: result.tasks)
 				return true
 		else
 			error.messages.push "Missing login information. See options page."
 		return false
 
-	getHtml: (sendResponse, error) ->
+	getHtml: (error) ->
+		returnData = {}
 		$.ajax(
 			url: chrome.extension.getURL('html/timers.html')
 			dataType: 'html'
-			success: sendResponse
-			error: ->
-				error.messages.push "Couldn't find html/timers.html"
-				sendResponse(error:error)
+			async: false
+			success: (data) ->
+				returnData = data
 		)
-		return true
+		return returnData
 
 app = new App()
