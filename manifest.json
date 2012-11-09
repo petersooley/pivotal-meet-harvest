@@ -17,6 +17,6 @@
 		"https://*.harvestapp.com/"
 	],
 	"background": {
-		"scripts": ["lib/jquery.js","lib/base64.js","js/background.js"]
+		"scripts": ["lib/jquery.js","lib/base64.js","lib/PivotalAPI.js","lib/HarvestAPI.js","js/background.js"]
 	}
 }
