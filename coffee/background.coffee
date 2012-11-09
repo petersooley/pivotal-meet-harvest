@@ -18,7 +18,7 @@ class PivotalAPI
 		)
 
 	getAllProjects: ->
-		data = @HTTP('GET','projects', null)
+		data = @GET('projects', null)
 		projects = []
 		for project in $(data).find('project')
 			name = $(project).find('name').first().text()
@@ -27,6 +27,22 @@ class PivotalAPI
 				name: name
 				id: id
 		return projects
+
+	getStories: (pivotalProjectId) ->
+		data = @GET('projects/'+pivotalProjectId+'/stories')
+		stories = []
+		for story in $(data).find('story')
+			s =
+				id: $(story).find('id').text()
+				name: $(story).find('name').text()
+			stories.push s
+		return stories
+
+	POST: (path, data) ->
+		return @HTTP('POST', path, data) ->
+
+	GET: (path, data) ->
+		return @HTTP('GET', path, data)
 
 	HTTP: (method, path, data) ->
 		returnData = false
@@ -76,7 +92,7 @@ class HarvestAPI
 		daily = @GET('daily')
 		entries = []
 		tasks = []
-		console.log daily
+
 		# Find the tasks for this project
 		for project in $(daily).find('project')
 			id = $(project).children('id')[0]
@@ -93,14 +109,12 @@ class HarvestAPI
 		for entry in $(daily).find('day_entry')
 			if $($(entry).find('project_id')[0]).text() == ''+harvestProjectId
 				running = if $(entry).find('timer_started_at')[0]? then true else false
-
-					## TODO GET ENTRY TASK!!!!
-
-
 				e =
 					id: $($(entry).find('id')[0]).text()
 					hours: $($(entry).find('hours')[0]).text()
 					running: running
+					task: $($(entry).find('task_id')[0]).text()
+					notes: $($(entry).find('notes')[0]).text()
 				entries.push e
 				break
 		return entries: entries, tasks: tasks
@@ -196,6 +210,8 @@ class App
 	# data <-- projectId
 	# returns the html needed for harvest timer buttons
 	login: (data, sendResponse, error) ->
+		pUser = localStorage['pivotal_username']
+		pPass = localStorage['pivotal_password']
 		hUser = localStorage['harvest_username']
 		hPass = localStorage['harvest_password']
 		hSubdomain = localStorage['harvest_subdomain']
@@ -212,7 +228,11 @@ class App
 			return false
 
 		# Create HarvestAPI thereby logging in
-		if hUser? and hPass? and hSubdomain?
+		if hUser? and hPass? and hSubdomain? and pUser? and pPass?
+			try
+				@pivotalAPI = new PivotalAPI(pUser, pPass)
+			catch e
+				error.messages.push e.message
 			try
 				@harvestAPI = new HarvestAPI(hUser, hPass, hSubdomain)
 			catch e
@@ -220,7 +240,13 @@ class App
 
 			if error.messages.length == 0
 				result = @harvestAPI.getTodaysEntriesAndTasks(@harvestProjectId)
-				@entries = result.entries
+
+				stories = @pivotalAPI.getStories(@pivotalProjectId)
+				for entry in result.entries
+					for story in stories
+						if entry.notes == story.name
+							entry.storyId = story.id
+							@entries.push entry
 				sendResponse(html: @getHtml(), tasks: result.tasks)
 				return true
 		else

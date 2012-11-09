@@ -29,7 +29,7 @@
 
     PivotalAPI.prototype.getAllProjects = function() {
       var data, id, name, project, projects, _i, _len, _ref;
-      data = this.HTTP('GET', 'projects', null);
+      data = this.GET('projects', null);
       projects = [];
       _ref = $(data).find('project');
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
@@ -42,6 +42,30 @@
         });
       }
       return projects;
+    };
+
+    PivotalAPI.prototype.getStories = function(pivotalProjectId) {
+      var data, s, stories, story, _i, _len, _ref;
+      data = this.GET('projects/' + pivotalProjectId + '/stories');
+      stories = [];
+      _ref = $(data).find('story');
+      for (_i = 0, _len = _ref.length; _i < _len; _i++) {
+        story = _ref[_i];
+        s = {
+          id: $(story).find('id').text(),
+          name: $(story).find('name').text()
+        };
+        stories.push(s);
+      }
+      return stories;
+    };
+
+    PivotalAPI.prototype.POST = function(path, data) {
+      return this.HTTP('POST', path, data)(function() {});
+    };
+
+    PivotalAPI.prototype.GET = function(path, data) {
+      return this.HTTP('GET', path, data);
     };
 
     PivotalAPI.prototype.HTTP = function(method, path, data) {
@@ -114,7 +138,6 @@
       daily = this.GET('daily');
       entries = [];
       tasks = [];
-      console.log(daily);
       _ref = $(daily).find('project');
       for (_i = 0, _len = _ref.length; _i < _len; _i++) {
         project = _ref[_i];
@@ -141,7 +164,9 @@
           e = {
             id: $($(entry).find('id')[0]).text(),
             hours: $($(entry).find('hours')[0]).text(),
-            running: running
+            running: running,
+            task: $($(entry).find('task_id')[0]).text(),
+            notes: $($(entry).find('notes')[0]).text()
           };
           entries.push(e);
           break;
@@ -289,7 +314,9 @@
     };
 
     App.prototype.login = function(data, sendResponse, error) {
-      var hPass, hSubdomain, hUser, map, result, _i, _len, _ref;
+      var entry, hPass, hSubdomain, hUser, map, pPass, pUser, result, stories, story, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
+      pUser = localStorage['pivotal_username'];
+      pPass = localStorage['pivotal_password'];
       hUser = localStorage['harvest_username'];
       hPass = localStorage['harvest_password'];
       hSubdomain = localStorage['harvest_subdomain'];
@@ -307,7 +334,12 @@
         error.messages.push("This project is not mapped to a Harvest project. See options page.");
         return false;
       }
-      if ((hUser != null) && (hPass != null) && (hSubdomain != null)) {
+      if ((hUser != null) && (hPass != null) && (hSubdomain != null) && (pUser != null) && (pPass != null)) {
+        try {
+          this.pivotalAPI = new PivotalAPI(pUser, pPass);
+        } catch (e) {
+          error.messages.push(e.message);
+        }
         try {
           this.harvestAPI = new HarvestAPI(hUser, hPass, hSubdomain);
         } catch (e) {
@@ -315,7 +347,18 @@
         }
         if (error.messages.length === 0) {
           result = this.harvestAPI.getTodaysEntriesAndTasks(this.harvestProjectId);
-          this.entries = result.entries;
+          stories = this.pivotalAPI.getStories(this.pivotalProjectId);
+          _ref1 = result.entries;
+          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+            entry = _ref1[_j];
+            for (_k = 0, _len2 = stories.length; _k < _len2; _k++) {
+              story = stories[_k];
+              if (entry.notes === story.name) {
+                entry.storyId = story.id;
+                this.entries.push(entry);
+              }
+            }
+          }
           sendResponse({
             html: this.getHtml(),
             tasks: result.tasks
