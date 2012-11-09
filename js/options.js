@@ -15,43 +15,38 @@
     $('#harvest_subdomain').val(hSubdomain);
     if ((pUser != null) && (pPass != null) && (hUser != null) && (hPass != null) && (hSubdomain != null)) {
       chrome.extension.sendMessage({
-        method: 'login'
+        method: 'downloadProjects'
       }, function(response) {
-        var msg, _i, _len, _ref;
+        var $body, harvest, map, mapping, msg, options, pivotal, project, _i, _j, _k, _l, _len, _len1, _len2, _len3, _ref, _results;
         if (response.error != null) {
           _ref = response.error.messages;
           for (_i = 0, _len = _ref.length; _i < _len; _i++) {
             msg = _ref[_i];
             $('.error').append('<div>' + msg + '</div>');
           }
-          return;
+          return false;
         }
-        return chrome.extension.sendMessage({
-          method: 'downloadProjects'
-        }, function(response) {
-          var $body, harvest, map, mapping, options, pivotal, project, _j, _k, _l, _len1, _len2, _len3, _results;
-          $body = $('#projects').find('tbody');
-          harvest = response.harvest;
-          pivotal = response.pivotal;
-          options = '<option value=""></option>';
-          for (_j = 0, _len1 = pivotal.length; _j < _len1; _j++) {
-            project = pivotal[_j];
-            options += '<option value="' + project.id + '">' + project.name + '</option>';
+        $body = $('#projects').find('tbody');
+        harvest = response.harvest;
+        pivotal = response.pivotal;
+        options = '<option value=""></option>';
+        for (_j = 0, _len1 = pivotal.length; _j < _len1; _j++) {
+          project = pivotal[_j];
+          options += '<option value="' + project.id + '">' + project.name + '</option>';
+        }
+        for (_k = 0, _len2 = harvest.length; _k < _len2; _k++) {
+          project = harvest[_k];
+          $body.append('<tr><td><span class="code">[' + project.code + ']</span> ' + project.name + '</td><td><select id="' + project.id + '">' + options + '</select></td></tr>');
+        }
+        if (localStorage['project_mapping'] != null) {
+          mapping = JSON.parse(localStorage['project_mapping']);
+          _results = [];
+          for (_l = 0, _len3 = mapping.length; _l < _len3; _l++) {
+            map = mapping[_l];
+            _results.push($('#' + map.harvest).val(map.pivotal));
           }
-          for (_k = 0, _len2 = harvest.length; _k < _len2; _k++) {
-            project = harvest[_k];
-            $body.append('<tr><td><span class="code">[' + project.code + ']</span> ' + project.name + '</td><td><select id="' + project.id + '">' + options + '</select></td></tr>');
-          }
-          if (localStorage['project_mapping'] != null) {
-            mapping = JSON.parse(localStorage['project_mapping']);
-            _results = [];
-            for (_l = 0, _len3 = mapping.length; _l < _len3; _l++) {
-              map = mapping[_l];
-              _results.push($('#' + map.harvest).val(map.pivotal));
-            }
-            return _results;
-          }
-        });
+          return _results;
+        }
       });
     }
     return $('form').submit(function() {

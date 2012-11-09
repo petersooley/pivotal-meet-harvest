@@ -13,6 +13,8 @@ class App
 					return true if @get(request, sendResponse, error)
 				when 'edit'
 					return true if @edit(request, sendResponse, error)
+				when 'downloadProjects'
+					return true if @downloadProjects(sendResponse, error)
 				else
 					error.messages.push "Unrecognized request method in sendMessage call."
 			sendResponse(error: error)
@@ -64,11 +66,6 @@ class App
 	# data <-- projectId
 	# returns the html needed for harvest timer buttons
 	login: (data, sendResponse, error) ->
-		pUser = localStorage['pivotal_username']
-		pPass = localStorage['pivotal_password']
-		hUser = localStorage['harvest_username']
-		hPass = localStorage['harvest_password']
-		hSubdomain = localStorage['harvest_subdomain']
 
 		# Get the Pivotal/Harvest mapping
 		@pivotalProjectId = data.projectId
@@ -81,7 +78,36 @@ class App
 			error.messages.push "This project is not mapped to a Harvest project. See options page."
 			return false
 
-		# Create HarvestAPI thereby logging in
+		# Login and get info
+		if @loginToAPIs(error)
+			result = @harvestAPI.getTodaysEntriesAndTasks(@harvestProjectId)
+			stories = @pivotalAPI.getStories(@pivotalProjectId)
+			for entry in result.entries
+				for story in stories
+					if entry.notes == story.name
+						entry.storyId = story.id
+						@entries.push entry
+			sendResponse(html: @getHtml(), tasks: result.tasks)
+			return true
+		return false
+
+	downloadProjects: (sendResponse, error) ->
+		return false if !@loginToAPIs(error)
+		pivotalProjects = @pivotalAPI.getProjects()
+		harvestProjects = @harvestAPI.getProjects()
+		sendResponse(
+			pivotal: pivotalProjects
+			harvest: harvestProjects
+		)
+		return true
+
+	loginToAPIs: (error) ->
+		pUser = localStorage['pivotal_username']
+		pPass = localStorage['pivotal_password']
+		hUser = localStorage['harvest_username']
+		hPass = localStorage['harvest_password']
+		hSubdomain = localStorage['harvest_subdomain']
+
 		if hUser? and hPass? and hSubdomain? and pUser? and pPass?
 			try
 				@pivotalAPI = new PivotalAPI(pUser, pPass)
@@ -92,20 +118,12 @@ class App
 			catch e
 				error.messages.push e.message
 
-			if error.messages.length == 0
-				result = @harvestAPI.getTodaysEntriesAndTasks(@harvestProjectId)
-
-				stories = @pivotalAPI.getStories(@pivotalProjectId)
-				for entry in result.entries
-					for story in stories
-						if entry.notes == story.name
-							entry.storyId = story.id
-							@entries.push entry
-				sendResponse(html: @getHtml(), tasks: result.tasks)
-				return true
-		else
-			error.messages.push "Missing login information. See options page."
+			if error.messages.length != 0
+				error.messages.push "Missing login information. See options page."
+				return false
+			return true
 		return false
+
 
 	getHtml: (error) ->
 		returnData = {}

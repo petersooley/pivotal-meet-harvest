@@ -57,6 +57,17 @@ class HarvestAPI
 				break
 		return entries: entries, tasks: tasks
 
+	getProjects: ->
+		daily = @GET('daily')
+		projects = []
+		for project in $(daily).find('project')
+			continue if $(project).children('code').text() == ''
+			projects.push
+				name: $(project).children('name').text()
+				id: $(project).children('id').text()
+				code: $(project).children('code').text()
+		return projects
+
 
 	GET: (path) ->
 		return @HTTP('GET', path, null)

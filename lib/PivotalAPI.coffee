@@ -38,6 +38,17 @@ class PivotalAPI
 			stories.push s
 		return stories
 
+	getProjects: ->
+		data = @GET('projects', null)
+		projects = []
+		for project in $(data).find('project')
+			name = $(project).find('name').first().text()
+			id = $(project).find('id').first().text()
+			projects.push
+				name: name
+				id: id
+		return projects
+
 	POST: (path, data) ->
 		return @HTTP('POST', path, data) ->
 

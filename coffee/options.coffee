@@ -12,28 +12,27 @@ $ ->
 	$('#harvest_subdomain').val(hSubdomain)
 
 	if pUser? and pPass? and hUser? and hPass? and hSubdomain?
-		chrome.extension.sendMessage(method: 'login', (response) ->
+		chrome.extension.sendMessage(method: 'downloadProjects', (response) ->
 			if response.error?
 				for msg in response.error.messages
 					$('.error').append('<div>'+msg+'</div>')
-				return
-			chrome.extension.sendMessage(method: 'downloadProjects', (response) ->
-				$body = $('#projects').find('tbody')
-				harvest = response.harvest
-				pivotal = response.pivotal
+				return false
+			$body = $('#projects').find('tbody')
+			harvest = response.harvest
+			pivotal = response.pivotal
 
-				options = '<option value=""></option>'
-				for project in pivotal
-					options += '<option value="'+project.id+'">'+project.name+'</option>'
+			options = '<option value=""></option>'
+			for project in pivotal
+				options += '<option value="'+project.id+'">'+project.name+'</option>'
 
-				for project in harvest
-					$body.append('<tr><td><span class="code">['+project.code+']</span> '+project.name+'</td><td><select id="'+project.id+'">'+options+'</select></td></tr>')
+			for project in harvest
+				$body.append('<tr><td><span class="code">['+project.code+']</span> '+project.name+'</td><td><select id="'+project.id+'">'+options+'</select></td></tr>')
 
-				if localStorage['project_mapping']?
-					mapping = JSON.parse(localStorage['project_mapping'])
-					for map in mapping
-						$('#'+map.harvest).val(map.pivotal)
-			)
+			if localStorage['project_mapping']?
+				mapping = JSON.parse(localStorage['project_mapping'])
+				for map in mapping
+					$('#'+map.harvest).val(map.pivotal)
+
 		)
 
 	$('form').submit(->

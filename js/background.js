@@ -32,6 +32,11 @@
               return true;
             }
             break;
+          case 'downloadProjects':
+            if (_this.downloadProjects(sendResponse, error)) {
+              return true;
+            }
+            break;
           default:
             error.messages.push("Unrecognized request method in sendMessage call.");
         }
@@ -103,12 +108,7 @@
     };
 
     App.prototype.login = function(data, sendResponse, error) {
-      var entry, hPass, hSubdomain, hUser, map, pPass, pUser, result, stories, story, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
-      pUser = localStorage['pivotal_username'];
-      pPass = localStorage['pivotal_password'];
-      hUser = localStorage['harvest_username'];
-      hPass = localStorage['harvest_password'];
-      hSubdomain = localStorage['harvest_subdomain'];
+      var entry, map, result, stories, story, _i, _j, _k, _len, _len1, _len2, _ref, _ref1;
       this.pivotalProjectId = data.projectId;
       this.harvestProjectId = false;
       _ref = JSON.parse(localStorage['project_mapping']);
@@ -123,6 +123,50 @@
         error.messages.push("This project is not mapped to a Harvest project. See options page.");
         return false;
       }
+      if (this.loginToAPIs(error)) {
+        result = this.harvestAPI.getTodaysEntriesAndTasks(this.harvestProjectId);
+        stories = this.pivotalAPI.getStories(this.pivotalProjectId);
+        _ref1 = result.entries;
+        for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
+          entry = _ref1[_j];
+          for (_k = 0, _len2 = stories.length; _k < _len2; _k++) {
+            story = stories[_k];
+            if (entry.notes === story.name) {
+              entry.storyId = story.id;
+              this.entries.push(entry);
+            }
+          }
+        }
+        sendResponse({
+          html: this.getHtml(),
+          tasks: result.tasks
+        });
+        return true;
+      }
+      return false;
+    };
+
+    App.prototype.downloadProjects = function(sendResponse, error) {
+      var harvestProjects, pivotalProjects;
+      if (!this.loginToAPIs(error)) {
+        return false;
+      }
+      pivotalProjects = this.pivotalAPI.getProjects();
+      harvestProjects = this.harvestAPI.getProjects();
+      sendResponse({
+        pivotal: pivotalProjects,
+        harvest: harvestProjects
+      });
+      return true;
+    };
+
+    App.prototype.loginToAPIs = function(error) {
+      var hPass, hSubdomain, hUser, pPass, pUser;
+      pUser = localStorage['pivotal_username'];
+      pPass = localStorage['pivotal_password'];
+      hUser = localStorage['harvest_username'];
+      hPass = localStorage['harvest_password'];
+      hSubdomain = localStorage['harvest_subdomain'];
       if ((hUser != null) && (hPass != null) && (hSubdomain != null) && (pUser != null) && (pPass != null)) {
         try {
           this.pivotalAPI = new PivotalAPI(pUser, pPass);
@@ -134,28 +178,11 @@
         } catch (e) {
           error.messages.push(e.message);
         }
-        if (error.messages.length === 0) {
-          result = this.harvestAPI.getTodaysEntriesAndTasks(this.harvestProjectId);
-          stories = this.pivotalAPI.getStories(this.pivotalProjectId);
-          _ref1 = result.entries;
-          for (_j = 0, _len1 = _ref1.length; _j < _len1; _j++) {
-            entry = _ref1[_j];
-            for (_k = 0, _len2 = stories.length; _k < _len2; _k++) {
-              story = stories[_k];
-              if (entry.notes === story.name) {
-                entry.storyId = story.id;
-                this.entries.push(entry);
-              }
-            }
-          }
-          sendResponse({
-            html: this.getHtml(),
-            tasks: result.tasks
-          });
-          return true;
+        if (error.messages.length !== 0) {
+          error.messages.push("Missing login information. See options page.");
+          return false;
         }
-      } else {
-        error.messages.push("Missing login information. See options page.");
+        return true;
       }
       return false;
     };
