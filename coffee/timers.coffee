@@ -12,8 +12,8 @@ class Timers
 
 	setupSingle: ->
 		timerHtml = @$html.find('#single-timer').html()
-		$('.details_sidebar ul.subset li.state').after(timerHtml)
-		$harvest = $('.details_sidebar ul.subset li.harvest')
+		$('.story.info .state').after(timerHtml)
+		$harvest = $('.story.info .harvest')
 		$select = $harvest.find('select')
 		for task in @tasks
 			$select.append('<option value="'+task.id+'">'+task.name+'</option>')
@@ -36,12 +36,12 @@ window.ERR = (msg) ->
 $ ->
 
 	# Parse the URL to figure out the project ID and story ID
-	uri = document.location.href.split('/')
-	if typeof uri[4] == 'undefined' or uri[3] != 'projects'
+	uri = document.location.pathname.split('/')
+	if typeof uri[3] == 'undefined' or uri[2] != 'projects'
 		return
-	projectId = parseInt(uri[4])
+	projectId = parseInt(uri[3])
 	storyId = null
-	if typeof uri[5] != 'undefined' and uri[5] == 'stories'
+	if typeof uri[3] != 'undefined' and uri[4] == 'stories'
 		storyId = parseInt(uri[6])
 
 	# Get user accounts data from localStorage from background.js
